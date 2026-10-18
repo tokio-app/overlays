@@ -13,9 +13,11 @@
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Streaming apps show the page over the video, so keep it transparent. */
+/* Streaming apps show the page over the video, so keep it transparent. It's never scrolled,
+   so no scrollbars when the browser source is smaller than the page. */
 body {
   margin: 0;
+  overflow: hidden;
   background: transparent;
 }
 
