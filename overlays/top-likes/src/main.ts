@@ -28,7 +28,7 @@ const demo = params.has("demo");
 const storageKey = `top-likes:${overlayId}`;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
-let maxUsers = 8;
+let maxUsers = 3;
 let resetMs = hours(6);
 let showTotal = true;
 applyConfig(window.__OVERLAY_CONFIG__);
