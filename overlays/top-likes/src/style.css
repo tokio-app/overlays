@@ -1,0 +1,150 @@
+:root {
+  /* Set from the overlay's settings. */
+  --name-color: #3b9ae1;
+  --count-color: #e6e6e6;
+  --heart-color: #e8222b;
+
+  --gold: #f5b82e;
+  --silver: #c4c4c4;
+  --bronze: #d9822b;
+  --avatar-size: 80px;
+
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Streaming apps show the page over the video, so keep it transparent. */
+body {
+  margin: 0;
+  background: transparent;
+}
+
+#ranking {
+  display: grid;
+  gap: 26px;
+  margin: 0;
+  /* Room for the crown above the first row. */
+  padding: 42px 16px 16px;
+  list-style: none;
+}
+
+.viewer {
+  display: grid;
+  grid-template-columns: 52px var(--avatar-size) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 22px;
+}
+
+.rank {
+  display: flex;
+  justify-content: center;
+  color: var(--count-color);
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.rank svg {
+  width: 38px;
+  height: 50px;
+}
+
+.avatar {
+  position: relative;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+}
+
+.photo {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.photo img,
+.photo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo img {
+  position: absolute;
+  inset: 0;
+}
+
+.viewer[data-rank="1"] .photo {
+  border: 4px solid var(--gold);
+}
+
+.viewer[data-rank="2"] .photo {
+  border: 4px solid var(--silver);
+}
+
+.viewer[data-rank="3"] .photo {
+  border: 4px solid var(--bronze);
+}
+
+.crown {
+  display: none;
+  position: absolute;
+  top: -38px;
+  left: 50%;
+  width: 72px;
+  transform: translateX(-50%);
+}
+
+.crown svg {
+  display: block;
+  width: 100%;
+}
+
+#ranking:not(.no-crown) .viewer[data-rank="1"] .crown {
+  display: block;
+}
+
+.info {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  color: var(--name-color);
+  font-size: 24px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.likes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--count-color);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.heart {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  color: var(--heart-color);
+}
+
+.heart svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+/* Keeps the text readable over a bright video. */
+.rank,
+.name,
+.likes {
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+}

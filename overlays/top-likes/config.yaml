@@ -1,0 +1,54 @@
+# The settings streamers see in Tokio's gallery. Each field's id is a key of
+# window.__OVERLAY_CONFIG__. Keep the defaults in index.html's setup block in sync.
+sections:
+  - name: Ranking
+    id: ranking
+  - name: Colors
+    id: colors
+fields:
+  - name: Viewers shown
+    id: max_users
+    type: slider
+    section: ranking
+    attributes:
+      min: 3
+      max: 20
+      value: 8
+      default: 8
+  - name: Crown on the top viewer
+    id: show_crown
+    type: toggle
+    section: ranking
+    attributes:
+      value: true
+      default: true
+  - name: Start over after this many hours without likes
+    id: reset_hours
+    type: slider
+    section: ranking
+    attributes:
+      min: 1
+      max: 24
+      value: 6
+      default: 6
+  - name: Names
+    id: name_color
+    type: color
+    section: colors
+    attributes:
+      value: 3b9ae1
+      default: 3b9ae1
+  - name: Likes and ranks
+    id: count_color
+    type: color
+    section: colors
+    attributes:
+      value: e6e6e6
+      default: e6e6e6
+  - name: Hearts
+    id: heart_color
+    type: color
+    section: colors
+    attributes:
+      value: e8222b
+      default: e8222b

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Top Likes</title>
+    <!-- Tokio rewrites this block with the overlay's ID and saved settings. Keep it exactly
+         like this, before the scripts that read it, with the defaults from config.yaml. -->
+    <script id="tokio-setup">
+      window.__OVERLAY_ID__ = "";
+      window.__OVERLAY_CONFIG__ = {
+        max_users: 8,
+        show_crown: true,
+        reset_hours: 6,
+        name_color: "#3b9ae1",
+        count_color: "#e6e6e6",
+        heart_color: "#e8222b",
+      };
+    </script>
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <ol id="ranking" aria-label="Top likes"></ol>
+  </body>
+</html>
