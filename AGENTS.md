@@ -1,0 +1,88 @@
+# AGENTS.md
+
+## Project
+
+The overlays for Tokio, one folder each, and the tooling that builds, checks and releases them. Tokio (`tokio-app/tokio`, locally `../tokio`) is an Electron app that connects to a TikTok LIVE and serves overlays to streaming apps over a local HTTP/WebSocket server. It has its own `AGENTS.md`, as does the website (`tokio-app/website`, locally `../tokio-web`).
+
+Stack: Yarn 1 workspaces, Node >= 24, Vite 8 and TypeScript 7 for the template, plain Node scripts (JS with JSDoc, type-checked) for the tooling. The repo is MIT.
+
+## Commands
+
+```sh
+yarn new <id> ["Name"]  # copy overlays/_template to overlays/<id>
+yarn dev <id>           # the overlay's dev server
+yarn build [id...]      # build overlays into dist/ and check them like Tokio's import
+yarn typecheck          # tsc for scripts/ and every overlay with a typecheck script
+yarn lint               # oxlint --type-aware
+yarn format             # prettier --write .
+yarn release:build      # build everything and prepare release/ (see Releases)
+yarn release:notes      # print the next release's notes
+```
+
+Verify changes with `yarn format:check`, `yarn lint`, `yarn typecheck` and `yarn release:build`. To test an overlay in Tokio, import its `dist/` in **Settings → Imported Overlays**, or connect `yarn dev` with a test ID from **Tools → Test Overlays** (`?id=<test ID>`).
+
+## Agent models
+
+- **Planning:** Opus 5.5 at high effort. Be 90–95% confident in the plan before implementing or handing off; otherwise keep reading code or ask the user.
+- **Implementation subagents:** Sonnet 5.5 at high effort for well-scoped changes that follow existing patterns, such as a new overlay. Otherwise Opus 5.5: medium effort for moderate tasks, high for complex or cross-cutting ones (the release script, the catalog format, the workflows).
+
+## Layout
+
+| Path                            | Role                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| `overlays/<id>/`                | One overlay, a workspace named `@tokio-overlays/<id>`                          |
+| `overlays/_template/`           | What `yarn new` copies. Built and checked like an overlay, never released      |
+| `scripts/lib/schema.js`         | Copy of Tokio's overlay schemas and setup block regex                          |
+| `scripts/lib/validate.js`       | The checks on a built `dist/`                                                  |
+| `scripts/lib/build.js`          | Runs an overlay's `build`, copies its YAML files into `dist/`, validates       |
+| `scripts/lib/overlays.js`       | Lists overlays, runs yarn in a workspace, error helpers                        |
+| `scripts/release.js`            | Builds the release into `release/`: changed zips, previews and `overlays.json` |
+| `scripts/release-notes/`        | Release notes, adapted from Tokio's `scripts/release-notes`                    |
+| `.github/workflows/ci.yml`      | Format, lint, typecheck and `yarn release:build` on PRs and `main`             |
+| `.github/workflows/release.yml` | Publishes a release from a `v<version>` tag                                    |
+
+Generated, don't edit: `overlays/*/dist/`, `release/`.
+
+## Overlays
+
+- An overlay is `overlays/<id>/`. `<id>` is kebab-case, names the zip and the catalog entry, and never changes once released. Folders starting with `_` are never released.
+- The contract is small: `package.json` with a `build` script that writes a static site to `dist/`, plus `info.yaml`, `config.yaml` (when `config: true`) and `index.html` with the setup block. `dev` and `typecheck` scripts are optional; `yarn typecheck` runs the ones that exist.
+- Any framework works. Keep Vite's `base: "./"` (Tokio serves the overlay under `/<id>/`) and `build.license` (it writes `THIRD_PARTY_LICENSES.md` into the build). Keep the setup block in the HTML template.
+- The setup block must be written exactly `<script id="tokio-setup">`, with no other attributes. Tokio finds it with a regex and rewrites it with the overlay's ID and saved settings. Its `__OVERLAY_CONFIG__` defaults must match `config.yaml`.
+- `info.yaml` and `config.yaml` stay at the overlay's root, not in `public/`; the build copies them into `dist/`. Don't set `external` in `info.yaml`, Tokio sets it.
+- `package.json` needs a `description` (shown in the catalog). Its `version` must equal `info.yaml`'s; Yarn 1 ignores workspaces without one.
+- Connect with `window.__OVERLAY_ID__ || new URLSearchParams(location.search).get("id")`, as the template does, so dev and imported builds work without edits.
+- Overlays use `@tokioapp/overlay` (`../tokio-event-loader`, MIT) from npm, bundled into the build. Don't load it from a CDN, so overlays work offline and pin the version they were tested with.
+- Read config values defensively (`typeof config.title === "string"`): `ConfigData` values can be strings, numbers, booleans or gifts.
+
+## Releases
+
+- One `v<version>` tag (root `package.json`) publishes one release. It attaches only the overlays that are new or whose `info.yaml` version changed since the latest published release. Every release carries the full `overlays.json`, which points each overlay at the release holding its current zip.
+- **To ship a change to an overlay, bump its version** in `info.yaml` and `package.json`. `release:build` warns when an overlay changed since its release without a bump; the change won't ship.
+- **Never delete or replace old releases or their assets.** The catalog links to them.
+- The base catalog is `https://github.com/tokio-app/overlays/releases/latest/download/overlays.json`. That URL needs no API call and has no rate limit. Prereleases (`-` in the version) are marked as such, so `latest` skips them.
+- An entry is reused when the base has the same version from another release. A rerun of a release whose catalog is already published rebuilds what that release holds. Zips use a fixed date and sorted entries, so the same files give the same sha256.
+- `--release` (the workflow) fails when nothing changed or the base can't be read. Without it, both are only logged, so CI passes with no overlays.
+- GitHub allows 1,000 assets per release (a zip and a preview per overlay). `release:build` fails above that; release fewer overlays per tag.
+- Asset names are fixed: `<id>.zip`, `<id>.png`, `overlays.json`. Tokio and the website will depend on them and on the catalog's fields.
+- Catalog format (`CatalogSchema` in `scripts/release.js`, documented in `README.md`): adding a field is fine. Renaming or removing one needs a new `CATALOG_SCHEMA`, and Tokio and the website must handle both.
+- Release steps: bump the changed overlays' versions and the root version, commit (`chore(release): <version>`), push the tag `v<version>`.
+
+## Keeping in sync with Tokio
+
+- `scripts/lib/schema.js` mirrors `OverlayMetaSchema` (`tokio/src/common/schemas/store.ts`), `OverlayConfigSchema` (`tokio/src/common/schemas/overlay.ts`) and `SCRIPT_REGEX` (`tokio/src/main/services/overlay/common/index.ts`). Update it when those change.
+- `validate.js` mirrors `processOverlay` and `hasSetupBlock` (same file as `SCRIPT_REGEX`). If Tokio's import accepts or rejects something new, follow it.
+- The LIVE events in `.github/ISSUE_TEMPLATE/overlay_request.yml` mirror `TOKIO_EVENTS` (the `tokio:event:*` ones). Keep the server port (`37891`) and event names as Tokio has them.
+
+## Licensing
+
+- The repo's own code is MIT (`LICENSE`). `scripts/lib/schema.js` and `scripts/release-notes/` are copied from Tokio, whose source is MIT too.
+- Check the license of every dependency you add or upgrade, in overlays too: it ships inside the zips. Ask before adding anything copyleft (GPL, AGPL, LGPL, MPL, CC BY-SA), including fonts, images and sounds.
+- Assets you add (images, fonts, sounds) must be ours or under a license that allows redistribution; note third-party ones in the overlay's folder.
+- Don't use TikTok's logo or branding in overlays or previews. Tokio is not affiliated with TikTok or ByteDance.
+
+## Conventions
+
+- Prettier (2 spaces, double quotes, semicolons, trailing commas) and oxlint `--type-aware`, run by lint-staged at commit. Fix lint warnings in code you touch; use type guards instead of casts on `unknown`.
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org/), scoped to the overlay they change (`feat(gift-goal): ...`), enforced by commitlint in a husky hook. Don't bypass hooks.
+- Scripts are JS with JSDoc so they run without a build step; `yarn typecheck` checks them with `tsc` (`checkJs`). Spawn yarn through `yarn()` in `scripts/lib/overlays.js` so it works on Windows.

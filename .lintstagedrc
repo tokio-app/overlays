@@ -1,0 +1,4 @@
+{
+  "*": ["prettier --ignore-unknown --write"],
+  "*.{js,mjs,ts,tsx,jsx}": ["oxlint --type-aware"]
+}

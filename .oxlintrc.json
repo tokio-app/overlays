@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "ignorePatterns": ["**/dist/**", "**/release/**"],
+  "rules": {
+    "typescript/no-explicit-any": "off",
+    "typescript/no-unused-vars": "warn",
+    "curly": "off",
+    "no-shadow": "off",
+    "no-unused-vars": "error",
+    "no-console": "allow",
+    "no-underscore-dangle": "allow",
+    "no-floating-promises": "allow"
+  }
+}

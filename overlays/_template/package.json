@@ -1,0 +1,20 @@
+{
+  "name": "@tokio-overlays/template",
+  "version": "1.0.0",
+  "description": "A title and the LIVE's total likes. The starting point for new overlays.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@tokioapp/overlay": "^1.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

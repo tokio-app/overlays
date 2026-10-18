@@ -1,0 +1,51 @@
+name: Overlay Request
+description: Suggest a new overlay.
+title: "[Overlay]: "
+labels: ["overlay request"]
+assignees:
+  - akuqt
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should the overlay show?
+      description: Describe it as a viewer would see it on stream.
+      placeholder: A bar that fills up as gifts come in, until it reaches a goal.
+    validations:
+      required: true
+  - type: dropdown
+    id: events
+    attributes:
+      label: LIVE events
+      description: What it should react to.
+      multiple: true
+      options:
+        - Chat (tokio:event:chat)
+        - Follow (tokio:event:follow)
+        - Share (tokio:event:share)
+        - Like (tokio:event:like)
+        - Gift (tokio:event:gift)
+        - Envelope (tokio:event:envelope)
+        - Super Fan (tokio:event:superfan)
+        - Super Fan Box (tokio:event:superfanbox)
+        - Super Fan Join (tokio:event:superfanjoin)
+        - Member Join (tokio:event:memberjoin)
+        - Viewers (tokio:event:roomuser)
+        - Music Change (tokio:event:music:change)
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings
+      description: What streamers should be able to change in Tokio's gallery (colors, text, gifts, goals...).
+      placeholder: The goal in coins, the bar color and the gifts that count.
+    validations:
+      required: false
+  - type: upload
+    id: references
+    attributes:
+      label: References or mockups
+      description: Screenshots, sketches or examples of similar overlays.
+    validations:
+      required: false

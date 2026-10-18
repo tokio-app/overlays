@@ -1,0 +1,22 @@
+# The settings streamers see in Tokio's gallery. Each field's id is a key of
+# window.__OVERLAY_CONFIG__. Keep the defaults in index.html's setup block in sync.
+sections:
+  - name: General
+    id: general
+fields:
+  - name: Title
+    id: title
+    type: input
+    section: general
+    attributes:
+      mode: text
+      placeholder: Overlay title...
+      value: Likes
+      default: Likes
+  - name: Main color
+    id: main_color
+    type: color
+    section: general
+    attributes:
+      value: ffffff
+      default: ffffff

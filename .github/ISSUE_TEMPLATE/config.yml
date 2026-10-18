@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Problems with the Tokio app
+    url: https://github.com/tokio-app/tokio/issues
+    about: Bugs and requests for the app itself, not for one of these overlays.
+  - name: Building your own overlay
+    url: https://tokio.ialfaro.com/docs/developers/building-an-overlay/
+    about: How to make an overlay, with plain HTML or any framework.
+  - name: Website
+    url: https://tokio.ialfaro.com
+    about: Visit our website.

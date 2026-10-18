@@ -1,0 +1,79 @@
+name: Bug Report
+description: Report an overlay that doesn't work as it should.
+title: "[Bug]: "
+labels: ["bug"]
+assignees:
+  - akuqt
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is for the overlays in this repository. For a problem with the Tokio app itself, open an issue in [tokio-app/tokio](https://github.com/tokio-app/tokio/issues) instead.
+  - type: input
+    id: overlay
+    attributes:
+      label: Overlay
+      description: Its name, as shown in Tokio's gallery.
+      placeholder: Likes Counter
+    validations:
+      required: true
+  - type: input
+    id: overlay-version
+    attributes:
+      label: Overlay version
+      description: Shown next to the overlay in **Settings → Imported Overlays**.
+      placeholder: 1.0.0
+    validations:
+      required: false
+  - type: input
+    id: tokio-version
+    attributes:
+      label: Tokio version
+      description: Shown on Tokio's **About** page.
+      placeholder: 0.1.0
+    validations:
+      required: false
+  - type: dropdown
+    id: streaming-app
+    attributes:
+      label: Streaming app
+      description: Where the overlay is shown.
+      options:
+        - OBS Studio
+        - TikTok LIVE Studio
+        - Tokio's preview only
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us what you expected to happen.
+      placeholder: The likes stop counting after a few minutes.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Import the overlay and add it to OBS.
+        2. Connect to a LIVE.
+        3. ...
+    validations:
+      required: false
+  - type: upload
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If you can, show what the overlay looks like.
+    validations:
+      required: false
+  - type: upload
+    id: logs
+    attributes:
+      label: Logs
+      description: Tokio's logs, if they show an error.
+    validations:
+      required: false

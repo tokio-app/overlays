@@ -1,0 +1,77 @@
+name: Release
+
+# Push a tag v<version> matching package.json to publish a GitHub release with the overlays that
+# are new or whose version changed since the latest release. Every release also has the full
+# catalog, overlays.json, which points each overlay at the release holding its zip. Don't delete
+# old releases: the catalog links to them.
+on:
+  push:
+    tags: ["v*"]
+
+# Each release builds on the latest one's catalog, so they run one at a time.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history and tags, for the notes and the version bump warnings
+
+      - name: Tag matches package.json
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match package.json version $version."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install packages
+        run: yarn install --frozen-lockfile
+
+      - name: Format
+        run: yarn format:check
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      # Fails when nothing changed since the latest release or its catalog can't be read.
+      - name: Build the release
+        run: yarn release:build --release
+
+      # The new, updated and removed overlays, then the commits since the previous v* tag.
+      - name: Write release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release-notes/index.js "$GITHUB_REF_NAME" > release/notes.md
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ls -l release/assets
+          # A rerun only replaces the files, so notes already edited in the release are kept.
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" release/assets/* --clobber
+            exit 0
+          fi
+          # Prereleases (0.2.0-beta.1) aren't the latest release, so the catalog URL skips them.
+          flags=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" release/assets/* --verify-tag \
+            --title "Tokio Overlays ${GITHUB_REF_NAME#v}" --notes-file release/notes.md "${flags[@]}"

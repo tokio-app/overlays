@@ -1,0 +1,21 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #ffffff;
+}
+
+/* Streaming apps show the page over the video, so keep it transparent. */
+body {
+  margin: 0;
+  background: transparent;
+}
+
+h1,
+p {
+  margin: 0;
+  text-shadow: 0 2px 4px rgb(0 0 0 / 0.6);
+}
+
+#likes {
+  font-size: 3rem;
+  font-weight: 700;
+}

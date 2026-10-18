@@ -1,0 +1,50 @@
+{
+  "name": "tokio-overlays",
+  "version": "0.1.0",
+  "description": "Overlays for Tokio, the TikTok LIVE companion app.",
+  "private": true,
+  "type": "module",
+  "author": "Akuqt",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tokio-app/overlays.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tokio-app/overlays/issues"
+  },
+  "homepage": "https://tokio.ialfaro.com",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "yarn@1.22.22",
+  "workspaces": [
+    "overlays/*"
+  ],
+  "scripts": {
+    "new": "node scripts/new.js",
+    "dev": "node scripts/dev.js",
+    "build": "node scripts/build.js",
+    "typecheck": "tsc -p . && node scripts/workspaces.js typecheck",
+    "lint": "oxlint --type-aware",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "release:build": "node scripts/release.js",
+    "release:notes": "node scripts/release-notes/index.js",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@types/node": "^24.0.0",
+    "fflate": "^0.8.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "oxlint": "^1.88.0",
+    "oxlint-tsgolint": "^7.0.2004",
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  }
+}
