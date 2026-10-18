@@ -12,6 +12,8 @@
         max_users: 8,
         show_crown: true,
         reset_hours: 6,
+        show_total: true,
+        total_label: "likes",
         name_color: "#3b9ae1",
         count_color: "#e6e6e6",
         heart_color: "#e8222b",
@@ -20,6 +22,11 @@
     <script type="module" src="./src/main.ts"></script>
   </head>
   <body>
+    <p id="total" hidden>
+      <span class="heart"></span>
+      <span id="total-count"></span>
+      <span id="total-label"></span>
+    </p>
     <ol id="ranking" aria-label="Top likes"></ol>
   </body>
 </html>

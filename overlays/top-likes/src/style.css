@@ -7,6 +7,7 @@
   --gold: #f5b82e;
   --silver: #c4c4c4;
   --bronze: #d9822b;
+  --rank-width: 52px;
   --avatar-size: 80px;
 
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
@@ -16,6 +17,35 @@
 body {
   margin: 0;
   background: transparent;
+}
+
+#total {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 16px 0;
+  color: var(--count-color);
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+}
+
+#total[hidden] {
+  display: none;
+}
+
+#total .heart {
+  --size: 28px;
+  flex: none;
+  width: var(--size);
+  height: var(--size);
+  /* Centered over the medals. */
+  margin-left: calc((var(--rank-width) - var(--size)) / 2);
+}
+
+#total-count {
+  font-weight: 800;
 }
 
 #ranking {
@@ -29,7 +59,7 @@ body {
 
 .viewer {
   display: grid;
-  grid-template-columns: 52px var(--avatar-size) minmax(0, 1fr);
+  grid-template-columns: var(--rank-width) var(--avatar-size) minmax(0, 1fr);
   align-items: center;
   column-gap: 22px;
 }

@@ -3,6 +3,8 @@
 sections:
   - name: Ranking
     id: ranking
+  - name: Total likes
+    id: total
   - name: Colors
     id: colors
 fields:
@@ -31,6 +33,22 @@ fields:
       max: 24
       value: 6
       default: 6
+  - name: Show the LIVE's total likes
+    id: show_total
+    type: toggle
+    section: total
+    attributes:
+      value: true
+      default: true
+  - name: Label
+    id: total_label
+    type: input
+    section: total
+    attributes:
+      mode: text
+      placeholder: likes
+      value: likes
+      default: likes
   - name: Names
     id: name_color
     type: color

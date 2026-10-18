@@ -10,9 +10,17 @@ export interface Viewer {
 // Saved across reloads. Viewers below this start over, which keeps the save small.
 const SAVED_VIEWERS = 500;
 
-/** Each viewer's likes, added up from LIKE events. */
+/**
+ * Each viewer's likes, added up from LIKE events, and the LIVE's total.
+ *
+ * TikTok sends a viewer's taps in batches (after a short while, or every 15 taps), and
+ * `likeCount` is how many likes the batch carries, so a viewer's likes are the sum of their
+ * events' counts. `totalLikes` is the LIVE's total as TikTok reports it, including likes from
+ * before the overlay opened, so the latest event's is shown as is rather than added up.
+ */
 export class Ranking {
   private _viewers = new Map<string, Viewer>();
+  private _total = 0;
   private _updatedAt = 0;
 
   constructor(private _resetMs: number) {}
@@ -21,18 +29,32 @@ export class Ranking {
     this._resetMs = ms;
   }
 
-  /**
-   * Adds a viewer's likes. A like after resetMs without any starts the ranking over, so a new
-   * LIVE doesn't keep the last one's viewers. Returns whether anything changed.
-   */
-  add(user: UserData, likes: number, now = Date.now()): boolean {
-    const handle = user.handle || user.username;
-    if (!handle || !(likes > 0)) return false;
+  /** The LIVE's total likes, 0 until a LIKE event reports it. */
+  get total(): number {
+    return this._total;
+  }
 
+  /**
+   * Adds a LIKE event: the viewer's likes in it and the LIVE's total. A like after resetMs
+   * without any starts the ranking over, so a new LIVE doesn't keep the last one's viewers or
+   * total. Returns whether anything changed.
+   */
+  add(user: UserData, likes: number, total: number, now = Date.now()): boolean {
     if (this._updatedAt && now - this._updatedAt > this._resetMs) {
       this._viewers.clear();
+      this._total = 0;
     }
     this._updatedAt = now;
+
+    // The latest event's total. Tokio sends 0 when TikTok leaves it out.
+    let changed = false;
+    if (total > 0 && total !== this._total) {
+      this._total = total;
+      changed = true;
+    }
+
+    const handle = user.handle || user.username;
+    if (!handle || !(likes > 0)) return changed;
 
     const name = user.username || user.handle;
     const picture = user.profilePictures[0] ?? "";
@@ -57,6 +79,7 @@ export class Ranking {
   serialize(): string {
     return JSON.stringify({
       updatedAt: this._updatedAt,
+      total: this._total,
       viewers: this.top(SAVED_VIEWERS),
     });
   }
@@ -83,6 +106,9 @@ export class Ranking {
     }
 
     ranking._updatedAt = saved.updatedAt;
+    if ("total" in saved && typeof saved.total === "number") {
+      ranking._total = saved.total;
+    }
     for (const viewer of saved.viewers) {
       if (isViewer(viewer)) ranking._viewers.set(viewer.handle, viewer);
     }

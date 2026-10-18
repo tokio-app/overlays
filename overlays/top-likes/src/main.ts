@@ -16,6 +16,10 @@ interface Row {
 }
 
 const list = document.getElementById("ranking")!;
+const total = document.getElementById("total")!;
+const totalCount = document.getElementById("total-count")!;
+const totalLabel = document.getElementById("total-label")!;
+total.querySelector(".heart")!.innerHTML = HEART;
 const params = new URLSearchParams(location.search);
 // Tokio fills in the ID. While developing, open the page with ?id=<test ID>, made on Tokio's
 // Tools page, or with ?demo for sample viewers.
@@ -26,6 +30,7 @@ const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
 let maxUsers = 8;
 let resetMs = hours(6);
+let showTotal = true;
 applyConfig(window.__OVERLAY_CONFIG__);
 
 // Kept across reloads, since streaming apps reload overlays when scenes change.
@@ -44,7 +49,7 @@ tokio.on(TOKIO_EVENTS.CONFIG, (config) => {
 });
 
 tokio.on(TOKIO_EVENTS.LIKE, (data) => {
-  if (!ranking.add(data.user, data.likeCount)) return;
+  if (!ranking.add(data.user, data.likeCount, data.totalLikes)) return;
   scheduleRender();
   scheduleSave();
 });
@@ -58,6 +63,10 @@ function applyConfig(config: ConfigData) {
     resetMs = hours(config.reset_hours);
   }
   list.classList.toggle("no-crown", config.show_crown === false);
+  showTotal = config.show_total !== false;
+  if (typeof config.total_label === "string") {
+    totalLabel.textContent = config.total_label;
+  }
 
   const colors = {
     "--name-color": config.name_color,
@@ -81,6 +90,10 @@ function scheduleRender() {
 }
 
 function render() {
+  // Hidden until a LIKE event reports the total.
+  total.hidden = !showTotal || ranking.total === 0;
+  totalCount.textContent = ranking.total.toLocaleString();
+
   const top = ranking.top(maxUsers);
   const before = new Map(
     [...rows].map(([handle, row]) => [
@@ -256,6 +269,8 @@ function sampleRanking() {
           i < 4 ? [`https://picsum.photos/seed/tokio${i + 1}/200/200`] : [],
       },
       count,
+      // The total also counts likes from viewers who aren't shown.
+      48120,
     );
   });
   return sample;
