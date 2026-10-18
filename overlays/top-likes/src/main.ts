@@ -1,4 +1,9 @@
-import { tokio, TOKIO_EVENTS, type ConfigData } from "@tokioapp/overlay";
+import {
+  tokio,
+  TOKIO_EVENTS,
+  type ConfigData,
+  type UserData,
+} from "@tokioapp/overlay";
 import { CROWN, HEART, medal, PLACEHOLDER } from "./icons";
 import { Ranking, type Viewer } from "./ranking";
 import "./style.css";
@@ -22,11 +27,31 @@ const totalLabel = document.getElementById("total-label")!;
 total.querySelector(".heart")!.innerHTML = HEART;
 const params = new URLSearchParams(location.search);
 // Tokio fills in the ID. While developing, open the page with ?id=<test ID>, made on Tokio's
-// Tools page, or with ?demo for sample viewers.
+// Tools page, or with ?demo for the sample viewers. Tokio's Test button makes up a new viewer for
+// every event, so only the samples (or a real LIVE) show a viewer's likes adding up.
 const overlayId = window.__OVERLAY_ID__ || params.get("id") || "";
-const demo = params.has("demo");
+// Tokio's Overlays page previews the overlay in an iframe with this name. There, and with ?demo,
+// sample viewers keep liking until the first real like, so the preview doesn't sit empty.
+const preview = window.name === `TOKIO_APP-${overlayId}`;
+const demo = preview || params.has("demo");
 const storageKey = `top-likes:${overlayId}`;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+
+const SAMPLE_USERS: UserData[] = [
+  "Sunny Fox",
+  "Pixel Panda",
+  "Lucky Tiger",
+  "Cosmic Owl",
+  "Happy Koala",
+  "Neon Wolf",
+  "Chill Otter",
+  "Brave Lynx",
+].map((name, i) => ({
+  username: name,
+  handle: `@${name.toLowerCase().replace(" ", "_")}`,
+  // Placeholders show instead when offline.
+  profilePictures: [`https://picsum.photos/seed/tokio${i + 1}/200/200`],
+}));
 
 let maxUsers = 3;
 let resetMs = hours(6);
@@ -34,12 +59,13 @@ let showTotal = true;
 applyConfig(window.__OVERLAY_CONFIG__);
 
 // Kept across reloads, since streaming apps reload overlays when scenes change.
-const ranking = demo ? sampleRanking() : Ranking.restore(load(), resetMs);
+let ranking = demo ? sampleRanking() : Ranking.restore(load(), resetMs);
 const rows = new Map<string, Row>();
 let frame = 0;
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
 
 render();
+let stopSample = demo ? playSample() : undefined;
 
 // Sent when the streamer saves the overlay's settings.
 tokio.on(TOKIO_EVENTS.CONFIG, (config) => {
@@ -49,6 +75,13 @@ tokio.on(TOKIO_EVENTS.CONFIG, (config) => {
 });
 
 tokio.on(TOKIO_EVENTS.LIKE, (data) => {
+  // The first like replaces the sample viewers.
+  if (stopSample) {
+    stopSample();
+    stopSample = undefined;
+    ranking = new Ranking(resetMs);
+    scheduleRender();
+  }
   if (!ranking.add(data.user, data.likeCount, data.totalLikes)) return;
   scheduleRender();
   scheduleSave();
@@ -256,22 +289,52 @@ function hours(value: number) {
   return value * 60 * 60 * 1000;
 }
 
+// The sample viewers start 9 likes apart, so they soon trade places.
 function sampleRanking() {
   const sample = new Ranking(resetMs);
-  const likes = [15005, 10536, 7056, 1533, 830, 125, 90, 42];
-  likes.forEach((count, i) => {
-    sample.add(
-      {
-        username: `Example User ${i + 1}`,
-        handle: `@example${i + 1}`,
-        // Pictures for the top four, placeholders for the rest.
-        profilePictures:
-          i < 4 ? [`https://picsum.photos/seed/tokio${i + 1}/200/200`] : [],
-      },
-      count,
-      // The total also counts likes from viewers who aren't shown.
-      48120,
-    );
+  SAMPLE_USERS.forEach((user, i) => {
+    // The total also counts likes from viewers who aren't shown.
+    sample.add(user, (SAMPLE_USERS.length - i) * 9, 4210);
   });
   return sample;
+}
+
+// Sample viewers send batches of 1 to 15 likes at uneven times, as on a LIVE. Every few seconds
+// one of them starts tapping faster for a while, so they climb past the ones above them and the
+// crown changes hands. Returns a function that stops it.
+function playSample() {
+  let timer: ReturnType<typeof setTimeout>;
+  let climber: UserData | undefined;
+  let streak = 0;
+
+  const tick = () => {
+    if (streak === 0) {
+      climber = challenger();
+      streak = randomInt(4, 9);
+    }
+    streak--;
+
+    const user =
+      climber && Math.random() < 0.7
+        ? climber
+        : SAMPLE_USERS[randomInt(0, SAMPLE_USERS.length - 1)];
+    const likes = randomInt(1, 15);
+    ranking.add(user, likes, ranking.total + likes + randomInt(0, 40));
+    scheduleRender();
+    timer = setTimeout(tick, randomInt(250, 900));
+  };
+
+  timer = setTimeout(tick, 400);
+  return () => clearTimeout(timer);
+}
+
+// A sample viewer from second place to the first one below the shown rows.
+function challenger() {
+  const top = ranking.top(maxUsers + 1);
+  const viewer = top[randomInt(1, top.length - 1)];
+  return SAMPLE_USERS.find((user) => user.handle === viewer?.handle);
+}
+
+function randomInt(min: number, max: number) {
+  return min + Math.floor(Math.random() * (max - min + 1));
 }
