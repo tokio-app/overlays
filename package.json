@@ -23,6 +23,7 @@
   ],
   "scripts": {
     "new": "node scripts/new.js",
+    "delete": "node scripts/delete.js",
     "dev": "node scripts/dev.js",
     "build": "node scripts/build.js",
     "typecheck": "tsc -p . && node scripts/workspaces.js typecheck",

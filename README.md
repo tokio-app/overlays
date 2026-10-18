@@ -54,6 +54,7 @@ The template connects with `window.__OVERLAY_ID__` and falls back to the `id` in
 
 ```sh
 yarn new <id> ["Name"]  # start an overlay from the template
+yarn delete <id>        # delete an overlay (--force if it has uncommitted changes)
 yarn dev <id>           # its dev server
 yarn build [id...]      # build and check overlays (all of them without ids)
 yarn typecheck          # tsc for the scripts and every overlay with a typecheck script
@@ -89,6 +90,8 @@ The [Release](.github/workflows/release.yml) workflow checks and builds everythi
 Overlays that didn't change aren't uploaded again: the catalog points at the release that holds them. This keeps each release under GitHub's limit of 1,000 files.
 
 Prerelease versions such as `0.2.0-beta.1` are marked as prereleases, so the catalog URL below skips them. Don't delete old releases: the catalog links to their files.
+
+To retire an overlay, run `yarn delete <id>` and release. The new catalog no longer lists it, and its zips in older releases stay downloadable.
 
 ### The catalog
 

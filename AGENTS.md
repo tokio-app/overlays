@@ -10,6 +10,7 @@ Stack: Yarn 1 workspaces, Node >= 24, Vite 8 and TypeScript 7 for the template, 
 
 ```sh
 yarn new <id> ["Name"]  # copy overlays/_template to overlays/<id>
+yarn delete <id>        # delete overlays/<id> and update yarn.lock (--force for uncommitted changes)
 yarn dev <id>           # the overlay's dev server
 yarn build [id...]      # build overlays into dist/ and check them like Tokio's import
 yarn typecheck          # tsc for scripts/ and every overlay with a typecheck script
@@ -46,6 +47,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 ## Overlays
 
 - An overlay is `overlays/<id>/`. `<id>` is kebab-case, names the zip and the catalog entry, and never changes once released. Folders starting with `_` are never released.
+- Delete an overlay with `yarn delete <id>`, not by hand: it refuses to drop uncommitted changes and updates `yarn.lock`. The next release lists it as removed and drops it from the catalog. `_template` can't be deleted.
 - The contract is small: `package.json` with a `build` script that writes a static site to `dist/`, plus `info.yaml`, `config.yaml` (when `config: true`) and `index.html` with the setup block. `dev` and `typecheck` scripts are optional; `yarn typecheck` runs the ones that exist.
 - Any framework works. Keep Vite's `base: "./"` (Tokio serves the overlay under `/<id>/`) and `build.license` (it writes `THIRD_PARTY_LICENSES.md` into the build). Keep the setup block in the HTML template.
 - The setup block must be written exactly `<script id="tokio-setup">`, with no other attributes. Tokio finds it with a regex and rewrites it with the overlay's ID and saved settings. Its `__OVERLAY_CONFIG__` defaults must match `config.yaml`.
