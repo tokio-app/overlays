@@ -87,18 +87,22 @@ body {
   border: 4px solid var(--bronze);
 }
 
+/* Its band follows the 80px avatar's top edge (see CROWN in icons.ts) and covers the ring by 3px.
+   Above the photo, which comes after it. */
 .crown {
   display: none;
   position: absolute;
-  top: -38px;
-  left: 50%;
-  width: 72px;
-  transform: translateX(-50%);
+  z-index: 1;
+  top: -40px;
+  left: 5px;
+  width: 70px;
+  height: 62px;
 }
 
 .crown svg {
   display: block;
   width: 100%;
+  height: 100%;
 }
 
 #ranking:not(.no-crown) .viewer[data-rank="1"] .crown {
