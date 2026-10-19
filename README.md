@@ -6,9 +6,13 @@ This repository holds the overlays' source, one folder each, and publishes their
 
 ## Using an overlay
 
+In Tokio, open the **Overlays** page and click **Install** on the overlay you want, under **Official Overlays**. When a new version is released, its button changes to **Update**, and updating keeps your settings. The website's [Overlays page](https://tokio.ialfaro.com/overlays/) shows them all.
+
+To add one by hand instead:
+
 1. Open the [latest release](https://github.com/tokio-app/overlays/releases/latest), or the release `overlays.json` lists for the overlay you want, and download its zip.
 2. Extract it.
-3. In Tokio, import the extracted folder in **Settings → Imported Overlays**.
+3. In Tokio, import the extracted folder in **Settings → Imported Overlays**. Imported overlays don't get updates.
 
 See [Adding an overlay](https://tokio.ialfaro.com/docs/guides/adding-an-overlay/) to show it on stream.
 
@@ -30,7 +34,7 @@ overlays/gift-goal/
 ├── package.json   # name @tokio-overlays/<id>, version, description, "build" script
 ├── info.yaml      # name, version and config, read by Tokio
 ├── config.yaml    # the settings streamers see in Tokio's gallery (optional)
-├── preview.png    # shown in galleries (optional)
+├── preview.png    # shown in Tokio and on the website, 16:9 (optional)
 ├── index.html     # with the <script id="tokio-setup"> block
 └── src/
 ```
@@ -88,6 +92,8 @@ The [Release](.github/workflows/release.yml) workflow checks and builds everythi
 - `overlays.json`, the catalog of every overlay.
 
 Overlays that didn't change aren't uploaded again: the catalog points at the release that holds them. This keeps each release under GitHub's limit of 1,000 files.
+
+After a release that isn't a prerelease, the workflow asks the website to rebuild, so its Overlays page shows the new catalog. That needs a `WEBSITE_DISPATCH_TOKEN` secret, a fine-grained token with Contents read and write on `tokio-app/website`. Without it, the release still goes out with a warning.
 
 Prerelease versions such as `0.2.0-beta.1` are marked as prereleases, so the catalog URL below skips them. Don't delete old releases: the catalog links to their files.
 

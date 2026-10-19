@@ -46,7 +46,8 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 
 ## Overlays
 
-- An overlay is `overlays/<id>/`. `<id>` is kebab-case, names the zip and the catalog entry, and never changes once released. Folders starting with `_` are never released.
+- An overlay is `overlays/<id>/`. `<id>` is kebab-case, names the zip and the catalog entry, and never changes once released: Tokio installs the overlay under it, so it's also the overlay's URL (`http://tokio-app.local:37891/<id>/`). Folders starting with `_` are never released.
+- `preview.png` is optional. Tokio's **Official Overlays** and the website's Overlays page show it at 16:9, so make it 1280×720.
 - Delete an overlay with `yarn delete <id>`, not by hand: it refuses to drop uncommitted changes and updates `yarn.lock`. The next release lists it as removed and drops it from the catalog. `_template` can't be deleted.
 - The contract is small: `package.json` with a `build` script that writes a static site to `dist/`, plus `info.yaml`, `config.yaml` (when `config: true`) and `index.html` with the setup block. `dev` and `typecheck` scripts are optional; `yarn typecheck` runs the ones that exist.
 - Any framework works. Keep Vite's `base: "./"` (Tokio serves the overlay under `/<id>/`) and `build.license` (it writes `THIRD_PARTY_LICENSES.md` into the build). Keep the setup block in the HTML template.
@@ -66,7 +67,8 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 - An entry is reused when the base has the same version from another release. A rerun of a release whose catalog is already published rebuilds what that release holds. Zips use a fixed date and sorted entries, so the same files give the same sha256.
 - `--release` (the workflow) fails when nothing changed or the base can't be read. Without it, both are only logged, so CI passes with no overlays.
 - GitHub allows 1,000 assets per release (a zip and a preview per overlay). `release:build` fails above that; release fewer overlays per tag.
-- Asset names are fixed: `<id>.zip`, `<id>.png`, `overlays.json`. Tokio and the website will depend on them and on the catalog's fields.
+- Asset names are fixed: `<id>.zip`, `<id>.png`, `overlays.json`. Tokio and the website depend on them and on the catalog's fields.
+- After publishing a release that isn't a prerelease, the workflow sends a `repository_dispatch` (`release`) to `tokio-app/website`, which rebuilds its Overlays page. That needs the `WEBSITE_DISPATCH_TOKEN` secret (Contents read and write on `tokio-app/website`); without it the step only warns.
 - Catalog format (`CatalogSchema` in `scripts/release.js`, documented in `README.md`): adding a field is fine. Renaming or removing one needs a new `CATALOG_SCHEMA`, and Tokio and the website must handle both.
 - Release steps: bump the changed overlays' versions and the root version, commit (`chore(release): <version>`), push the tag `v<version>`.
 
@@ -74,6 +76,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 
 - `scripts/lib/schema.js` mirrors `OverlayMetaSchema` (`tokio/src/common/schemas/store.ts`), `OverlayConfigSchema` (`tokio/src/common/schemas/overlay.ts`) and `SCRIPT_REGEX` (`tokio/src/main/services/overlay/common/index.ts`). Update it when those change.
 - `validate.js` mirrors `processOverlay` and `hasSetupBlock` (same file as `SCRIPT_REGEX`). If Tokio's import accepts or rejects something new, follow it.
+- Tokio installs from the catalog (`tokio/src/main/services/overlay/common/catalog.ts`). It reads schema 1 and checks each zip's size and SHA-256 against the catalog. It only downloads zips and previews from this repo's release URLs (`https://github.com/tokio-app/overlays/releases/download/`), and drops entries whose id isn't kebab-case. An update keeps the settings whose field id and type are unchanged, so keep field ids stable across versions.
 - The LIVE events in `.github/ISSUE_TEMPLATE/overlay_request.yml` mirror `TOKIO_EVENTS` (the `tokio:event:*` ones). Keep the server port (`37891`) and event names as Tokio has them.
 
 ## Licensing
