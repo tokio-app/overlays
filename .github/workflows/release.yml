@@ -75,3 +75,16 @@ jobs:
           if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags+=(--prerelease); fi
           gh release create "$GITHUB_REF_NAME" release/assets/* --verify-tag \
             --title "Tokio Overlays ${GITHUB_REF_NAME#v}" --notes-file release/notes.md "${flags[@]}"
+
+      # Rebuilds the website, so its Overlays page shows the new catalog. Prereleases aren't in the
+      # catalog it reads.
+      - name: Update the website
+        if: ${{ !contains(github.ref_name, '-') }}
+        env:
+          GH_TOKEN: ${{ secrets.WEBSITE_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::WEBSITE_DISPATCH_TOKEN isn't set, so the website wasn't rebuilt. Run its Deploy workflow by hand."
+            exit 0
+          fi
+          gh api repos/tokio-app/website/dispatches -f event_type=release
