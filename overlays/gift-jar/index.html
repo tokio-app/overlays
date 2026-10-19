@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gift Jar</title>
+    <!-- Tokio rewrites this block with the overlay's ID and saved settings. Keep it exactly
+         like this, before the scripts that read it, with the defaults from config.yaml. -->
+    <script id="tokio-setup">
+      window.__OVERLAY_ID__ = "";
+      window.__OVERLAY_CONFIG__ = {
+        jar: "mason",
+        max_gifts: 150,
+        overflow: false,
+        combo_cap: 20,
+        gift_size: 34,
+        reset_hours: 6,
+        show_total: true,
+        show_message: true,
+        message_seconds: 5,
+        show_gifter: true,
+        gifter_seconds: 8,
+        glass_color: "#c4d0d8",
+        text_color: "#ffffff",
+        coin_color: "#ffc93c",
+        bar_color: "#e8222b",
+        panel_color: "#1f1f23",
+      };
+    </script>
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <!-- A stage as wide as the page, scaled to fit it, with the jar in the middle. The jar's
+         glass is two layers, with the gifts' canvas between them, so the gifts look inside it.
+         Gifts that spill out of the jar go on a canvas over the glass. -->
+    <div id="stage">
+      <div id="jar-back" class="jar" aria-hidden="true"></div>
+      <canvas id="gifts" aria-hidden="true"></canvas>
+      <div id="jar-front" class="jar" aria-hidden="true"></div>
+      <canvas id="spill" aria-hidden="true"></canvas>
+
+      <!-- One line: the gifter's name and the gift's name shorten to fit. -->
+      <p id="message" class="message">
+        <strong id="message-name" class="who"></strong>
+        <span>donated</span>
+        <img id="message-image" alt="" />
+        <strong id="message-gift" class="what"></strong>
+        <strong id="message-count"></strong>
+        <span>(<strong id="message-coins" class="coins"></strong>)</span>
+      </p>
+
+      <div id="gifter" class="gifter">
+        <div class="pill">
+          <span id="gifter-medal" class="medal"></span>
+          <span id="gifter-photo" class="photo"></span>
+          <span id="gifter-name" class="name"></span>
+          <span class="amount">
+            <span class="coin"></span>
+            <span id="gifter-coins"></span>
+          </span>
+        </div>
+        <div class="bar"><div id="gifter-bar" class="fill"></div></div>
+      </div>
+
+      <p id="total" class="total">
+        <span class="coin"></span>
+        <span id="total-coins"></span>
+      </p>
+    </div>
+  </body>
+</html>
