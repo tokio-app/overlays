@@ -6,7 +6,7 @@ This repository holds the overlays' source, one folder each, and publishes their
 
 ## Using an overlay
 
-In Tokio, open the **Overlays** page and click **Install** on the overlay you want, under **Official Overlays**. When a new version is released, its button changes to **Update**, and updating keeps your settings. The website's [Overlays page](https://tokio.ialfaro.com/overlays/) shows them all.
+In Tokio, open the **Overlays** page, click **Official Overlays** and **Install** the overlay you want. When a new version is released, a dot appears on **Official Overlays** and the overlay's button changes to **Update**, which keeps your settings. The website's [Overlays page](https://tokio.ialfaro.com/overlays/) shows them all.
 
 To add one by hand instead:
 
