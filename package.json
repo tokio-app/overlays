@@ -1,6 +1,6 @@
 {
   "name": "tokio-overlays",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Overlays for Tokio, the TikTok LIVE companion app.",
   "private": true,
   "type": "module",

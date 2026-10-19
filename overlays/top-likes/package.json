@@ -1,6 +1,6 @@
 {
   "name": "@tokio-overlays/top-likes",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The viewers who sent the most likes, with medals and a crown for the top three.",
   "private": true,
   "type": "module",
