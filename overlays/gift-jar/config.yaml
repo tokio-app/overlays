@@ -48,15 +48,6 @@ fields:
     attributes:
       value: false
       default: false
-  - name: Most gifts dropped per combo
-    id: combo_cap
-    type: slider
-    section: jar
-    attributes:
-      min: 1
-      max: 50
-      value: 20
-      default: 20
   - name: Gift size
     id: gift_size
     type: slider

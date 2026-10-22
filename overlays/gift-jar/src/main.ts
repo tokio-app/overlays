@@ -74,7 +74,6 @@ const SAMPLE_USERS: UserData[] = [
 let jarId = DEFAULT_JAR;
 let glassColor = "#c4d0d8";
 let maxGifts = 150;
-let comboCap = 20;
 let giftSize = 34;
 let resetMs = hours(6);
 let showTotal = true;
@@ -161,7 +160,6 @@ function applyConfig(config: ConfigData) {
   if (typeof jarValue === "string") jarId = jarById(jarValue).id;
   if (typeof config.glass_color === "string") glassColor = config.glass_color;
   if (typeof config.max_gifts === "number") maxGifts = config.max_gifts;
-  if (typeof config.combo_cap === "number") comboCap = config.combo_cap;
   if (typeof config.gift_size === "number") giftSize = config.gift_size;
   if (typeof config.overflow === "boolean") overflow = config.overflow;
   if (typeof config.reset_hours === "number") {
@@ -280,7 +278,7 @@ function fit() {
 }
 
 function handleGift(data: GiftData) {
-  const gifting = tally.add(data.user, data.gift, comboCap);
+  const gifting = tally.add(data.user, data.gift);
   if (!gifting) return;
   // The jar sat unused for the reset time, so it starts empty.
   if (gifting.reset) {

@@ -23,7 +23,7 @@ export interface Gifting {
   /** The streak's count and coins so far. */
   count: number;
   coins: number;
-  /** The gifts to drop for this event, past `comboCap` left out. */
+  /** The gifts to drop for this event. */
   drops: Drop[];
   /** The jar was emptied first, for sitting too long without gifts. */
   reset: boolean;
@@ -33,10 +33,18 @@ export interface Gifting {
 const SAVED_GIFTERS = 500;
 // The slider's top value.
 const SAVED_DROPS = 300;
+// A lower count this soon after a streak's last event is a late update, not a new streak.
+// Updates can arrive out of order within a batch, and TikTok closes a combo 3 to 4 s after its
+// last one, so a new combo comes later than this.
+const LATE_MS = 2000;
 
 interface Streak {
+  /** The last count TikTok sent. */
   last: number;
-  dropped: number;
+  /** The gifts counted so far: more than `last` when the same count came again. */
+  total: number;
+  /** When the last event that counted came. */
+  at: number;
 }
 
 /**
@@ -44,9 +52,10 @@ interface Streak {
  *
  * TikTok sends a combo as a run of events whose `comboCount` grows, and a last one with
  * `repeatEnd` set. A gift that isn't a combo has `repeatEnd` set at once. So each event adds
- * the count's growth since the combo's last one: a lower count means a new combo started, and
- * the same count (the closing event) adds nothing. Coins count in full, but a combo drops at
- * most `comboCap` gifts, so a huge one doesn't flood the jar.
+ * the count's growth since the combo's last one, and the closing event adds nothing. The same
+ * count again before the close is the gift sent again, as TikTok sends a gift sent one at a
+ * time. A lower count is an update that arrived late, unless the combo went quiet for LATE_MS:
+ * then a new combo started. Every gift sent drops.
  */
 export class Tally {
   private _gifters = new Map<string, Gifter>();
@@ -88,12 +97,12 @@ export class Tally {
 
   /**
    * Adds a GIFT event. A gift after resetMs without any empties the jar first. Returns what to
-   * show, or null when the event adds nothing (a combo's closing event, or no gifter).
+   * show, or null when the event adds nothing (a combo's closing event or a late update, or no
+   * gifter).
    */
   add(
     user: UserData,
     gift: GiftData["gift"],
-    comboCap: number,
     now = Date.now(),
   ): Gifting | null {
     let reset = false;
@@ -108,22 +117,26 @@ export class Tally {
     const count = Math.max(1, gift.comboCount);
     const streak = this._streaks.get(key);
 
+    // A new streak, unless this one goes on: a count that grows adds the growth, the same count
+    // again is the gift sent again unless it closes the combo, and a lower one is a late update.
     let added = count;
-    let dropped = 0;
-    if (streak && count >= streak.last) {
-      added = count - streak.last;
-      dropped = streak.dropped;
+    let total = count;
+    if (streak && (count >= streak.last || now - streak.at < LATE_MS)) {
+      if (count > streak.last) added = count - streak.last;
+      else if (count < streak.last || gift.repeatEnd) added = 0;
+      total = streak.total + added;
     }
 
     const unit = Math.max(0, gift.coins);
-    const drops: Drop[] = Array.from(
-      { length: Math.max(0, Math.min(added, comboCap - dropped)) },
-      () => ({ image: gift.image, giftId: gift.id, coins: unit }),
-    );
+    const drops: Drop[] = Array.from({ length: added }, () => ({
+      image: gift.image,
+      giftId: gift.id,
+      coins: unit,
+    }));
     if (gift.repeatEnd) {
       this._streaks.delete(key);
-    } else {
-      this._streaks.set(key, { last: count, dropped: dropped + drops.length });
+    } else if (added > 0) {
+      this._streaks.set(key, { last: count, total, at: now });
     }
     if (!handle || added === 0) return null;
 
@@ -146,8 +159,8 @@ export class Tally {
       key,
       gifter: { ...gifter },
       gift: { name: gift.name, image: gift.image, coins: unit },
-      count,
-      coins: unit * count,
+      count: total,
+      coins: unit * total,
       drops,
       reset,
     };
