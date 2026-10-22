@@ -91,8 +91,9 @@ const RELEASE_MS = 80;
 const FADE_MS = 400;
 // The most steps a gift resting too high over the rim is nudged.
 const NUDGE_STEPS = 120;
-// About how long a gift takes to drop into the jar.
-const LANDING_MS = 1000;
+// Gifts outside the jar newer than this stay. With no older ones there, the oldest in the jar go
+// instead, so a gift that just landed isn't the first to go.
+const SPILL_MS = 10_000;
 // The gifts may cover this much of the jar's body. Past it the oldest go, so the pile never
 // reaches the neck and blocks the mouth.
 const FILL = 0.6;
@@ -749,14 +750,13 @@ export class Jar {
   }
 
   // Fades out the oldest gifts while the jar holds too many. With overflow, the oldest outside
-  // the jar go first.
+  // the jar go first, but not ones that only just landed.
   private removeExtra(now: number) {
     let removed = false;
     while (this._pieces.length > 1 && this.tooMany()) {
-      // Not one still dropping in over the rim.
       const outside = this._overflow
         ? this._pieces.findIndex(
-            (piece) => now - piece.since > LANDING_MS && piece.outside,
+            (piece) => now - piece.since > SPILL_MS && piece.outside,
           )
         : -1;
       const [piece] = this._pieces.splice(Math.max(0, outside), 1);
@@ -764,7 +764,7 @@ export class Jar {
       removed = true;
     }
     // The gifts that rested on the removed ones have to fall. With overflow, letGo wakes only
-    // the gifts touching it, as a full jar is too many to wake each time one goes.
+    // the gifts over it, as a full jar is too many to wake each time one goes.
     if (removed && !this._overflow) {
       for (const { body } of this._pieces) Sleeping.set(body, false);
     }
@@ -797,13 +797,14 @@ export class Jar {
     else this._innerMoved = true;
     if (!this._overflow) return;
     this.onRemove?.(piece.drop);
-    // Gifts that touched it have to move. They wake the rest they knock into.
+    // Gifts that touched it or rested over it have to move. Sleeping ones don't fall when what
+    // held them goes, so the whole stack over it wakes. They wake the rest they knock into.
     const { position, circleRadius = 0 } = piece.body;
     for (const { body } of this._pieces) {
       const reach = circleRadius + (body.circleRadius ?? 0) + 4;
       if (
         Math.abs(body.position.x - position.x) < reach &&
-        Math.abs(body.position.y - position.y) < reach
+        body.position.y - position.y < reach
       ) {
         Sleeping.set(body, false);
       }
