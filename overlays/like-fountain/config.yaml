@@ -1,0 +1,59 @@
+# The settings streamers see in Tokio's gallery. Each field's id is a key of
+# window.__OVERLAY_CONFIG__. Keep the defaults in index.html's setup block in sync.
+sections:
+  - name: Hearts
+    id: hearts
+  - name: Colors
+    id: colors
+fields:
+  - name: Where the hearts rise from
+    id: origin
+    type: dropdown
+    section: hearts
+    attributes:
+      multiple: false
+      searchable: false
+      value: middle
+      default: middle
+      options:
+        - value: right
+          label: Right
+        - value: left
+          label: Left
+        - value: middle
+          label: Middle
+        - value: sides
+          label: Right and left
+        - value: all
+          label: All along the bottom
+  - name: Heart size
+    id: heart_size
+    type: slider
+    section: hearts
+    attributes:
+      min: 20
+      max: 120
+      value: 48
+      default: 48
+  - name: Show the viewer's profile picture
+    id: show_pictures
+    type: toggle
+    section: hearts
+    attributes:
+      value: true
+      default: true
+  - name: Heart color
+    id: heart_color
+    type: color
+    section: colors
+    attributes:
+      value: ff1f2f
+      default: ff1f2f
+  - name: Second heart color
+    id: second_color
+    type: color
+    section: colors
+    # Quoted, since YAML reads 22e632 as a number.
+    attributes:
+      value: "22e632"
+      default: "22e632"
