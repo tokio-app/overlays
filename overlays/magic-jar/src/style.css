@@ -1,0 +1,321 @@
+:root {
+  /* Set from the overlay's settings. */
+  --text-color: #ffffff;
+  --coin-color: #ffc93c;
+  --bar-color: #e8222b;
+  --panel-color: #1f1f23;
+
+  /* The design stage's size. Keep in sync with STAGE in jars/index.ts: main.ts sets its width to
+     the page's. It also sets where the jar sits on it (--jar-x, --jar-y, --jar-width,
+     --jar-height), where the message's tail touches the jar on either side (--bubble-x,
+     --bubble-right-x, --bubble-y) and the jar's tones (--main, --trim, their mixes and
+     --line). */
+  --stage-width: 1000px;
+  --stage-height: 700px;
+
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Streaming apps show the page over the video, so keep it transparent. It's never scrolled,
+   so no scrollbars when the browser source is smaller than the page. */
+body {
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* As wide as the page and scaled to fit it, at its bottom. */
+#stage {
+  --scale: 1;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: var(--stage-width);
+  height: var(--stage-height);
+  transform: translateX(-50%) scale(var(--scale));
+  transform-origin: 50% 100%;
+  color: var(--text-color);
+}
+
+/* Placed and sized by the jar: the gifts' canvas covers only the jar and the room above it, up to
+   the page's top. */
+#gifts,
+#spill {
+  position: absolute;
+}
+
+/* Each of the jar's layers gets a compositing layer of its own, so the gifter pill and the total
+   next to it don't share one with the jar, which would be painted again whenever they change. */
+.jar {
+  position: absolute;
+  top: var(--jar-y);
+  left: var(--jar-x);
+  width: var(--jar-width);
+  height: var(--jar-height);
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.jar svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.coin {
+  display: inline-flex;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  color: var(--coin-color);
+}
+
+.coin svg {
+  width: 100%;
+  height: 100%;
+}
+
+.message,
+.pill,
+.total {
+  background: var(--panel-color);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.35);
+}
+
+/* Beside the jar, on one line, centered on where it touches the jar, with its tail pointing
+   there. Left of the jar it's right-aligned, so it grows to the left; right of it (.right) it's
+   mirrored. It never passes the page's edge: the names shorten instead. */
+.message {
+  position: absolute;
+  top: calc(var(--bubble-y) - 22px);
+  right: calc(var(--stage-width) - var(--bubble-x) + 12px);
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  box-sizing: border-box;
+  height: 44px;
+  max-width: calc(var(--bubble-x) - 20px);
+  margin: 0;
+  padding: 0 18px;
+  border-radius: 22px;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: nowrap;
+  /* A shadow that follows the tail too. */
+  box-shadow: none;
+  filter: drop-shadow(0 4px 8px rgb(0 0 0 / 0.35));
+  transform-origin: 100% 50%;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
+}
+
+/* The tail, its tip 11px past the bubble, on the jar. Its sides are tangent to the bubble's
+   round end (22px radius, so 33px from the end's center to the tip), which makes the two one
+   smooth shape instead of a triangle stuck on a circle. */
+.message::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -11px;
+  width: 18.3px;
+  height: 32.8px;
+  margin-top: -16.4px;
+  background: var(--panel-color);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.message.right {
+  right: auto;
+  left: calc(var(--bubble-right-x) + 12px);
+  max-width: calc(var(--stage-width) - var(--bubble-right-x) - 20px);
+  transform-origin: 0 50%;
+}
+
+.message.right::after {
+  right: auto;
+  left: -11px;
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+
+.message.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.message > * {
+  flex: none;
+}
+
+.message strong {
+  font-weight: 800;
+}
+
+/* Long names shorten so the message stays on one line: the gifter's first, past a max width or
+   when the side is narrow. The gift's name, usually short, shortens only when that isn't enough
+   (main.ts adds .tight), so "Rose" isn't cut to "R..". No min-width: it would stretch a short
+   name and leave a gap after it. */
+.message .who,
+.message .what {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.message .who {
+  flex: 0 1 auto;
+  max-width: 160px;
+}
+
+.message.tight .what {
+  flex: 0 1 auto;
+}
+
+.message .coins {
+  color: var(--coin-color);
+}
+
+.message img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+/* Under the jar: a gifter at a time, with a bar that drains until the next one's turn. */
+.gifter {
+  position: absolute;
+  top: calc(var(--jar-y) + var(--jar-height) + 22px);
+  left: calc(var(--jar-x) + var(--jar-width) / 2);
+  transform: translate(-50%, 8px);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.25s,
+    transform 0.25s,
+    visibility 0.25s;
+}
+
+.gifter.visible {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 8px 18px;
+  border-radius: 999px;
+  font-size: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.medal {
+  display: flex;
+  width: 24px;
+  height: 31px;
+}
+
+.medal svg {
+  width: 100%;
+  height: 100%;
+}
+
+.photo {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.photo img,
+.photo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo img {
+  position: absolute;
+  inset: 0;
+}
+
+.name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The gifter's coins, in a darker pill inside. */
+.amount {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 6px;
+  padding: 6px 16px 6px 8px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.3);
+  color: var(--coin-color);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  height: 4px;
+  margin: 4px 22px 0;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.fill {
+  height: 100%;
+  background: var(--bar-color);
+  transform-origin: left;
+}
+
+.total {
+  position: absolute;
+  top: calc(var(--jar-y) + var(--jar-height) + 100px);
+  left: calc(var(--jar-x) + var(--jar-width) / 2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 18px 6px 10px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  color: var(--text-color);
+  font-size: 19px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.total .coin {
+  width: 22px;
+  height: 22px;
+}
+
+/* Under the jar when the gifter pill is turned off, instead of leaving a gap above it. */
+#stage.no-gifter .total {
+  top: calc(var(--jar-y) + var(--jar-height) + 22px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message,
+  .gifter {
+    transition: none;
+  }
+}

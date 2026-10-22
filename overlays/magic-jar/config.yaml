@@ -1,0 +1,163 @@
+# The settings streamers see in Tokio's gallery. Each field's id is a key of
+# window.__OVERLAY_CONFIG__. Keep the defaults in index.html's setup block in sync.
+sections:
+  - name: Jar
+    id: jar
+  - name: Gift message
+    id: message
+  - name: Gifter
+    id: gifter
+  - name: Colors
+    id: colors
+fields:
+  - name: Jar
+    id: jar
+    type: dropdown
+    section: jar
+    attributes:
+      multiple: false
+      searchable: false
+      value: moon
+      default: moon
+      options:
+        - value: moon
+          label: Moon cup
+        - value: chest
+          label: Treasure chest
+        - value: cauldron
+          label: Witch's cauldron
+        - value: trophy
+          label: Golden trophy
+        - value: hat
+          label: Magician's hat
+        - value: cone
+          label: Ice cream cone
+        - value: tub
+          label: Bubble bath
+        - value: gumball
+          label: Gumball machine
+        - value: piggy
+          label: Piggy bank
+  - name: Gifts the jar holds
+    id: max_gifts
+    type: slider
+    section: jar
+    attributes:
+      min: 30
+      max: 1000
+      value: 150
+      default: 150
+  - name: Let the gifts overflow the jar
+    id: overflow
+    type: toggle
+    section: jar
+    attributes:
+      value: false
+      default: false
+  - name: Gift size
+    id: gift_size
+    type: slider
+    section: jar
+    attributes:
+      min: 20
+      max: 50
+      value: 34
+      default: 34
+  - name: Empty the jar after this many hours without gifts
+    id: reset_hours
+    type: slider
+    section: jar
+    attributes:
+      min: 1
+      max: 24
+      value: 6
+      default: 6
+  - name: Show the jar's total coins
+    id: show_total
+    type: toggle
+    section: jar
+    attributes:
+      value: true
+      default: true
+  - name: Show a message for each gift
+    id: show_message
+    type: toggle
+    section: message
+    attributes:
+      value: true
+      default: true
+  - name: Seconds the message stays
+    id: message_seconds
+    type: slider
+    section: message
+    attributes:
+      min: 2
+      max: 15
+      value: 5
+      default: 5
+  - name: Show the latest gifter
+    id: show_gifter
+    type: toggle
+    section: gifter
+    attributes:
+      value: true
+      default: true
+  - name: Seconds the gifter stays
+    id: gifter_seconds
+    type: slider
+    section: gifter
+    attributes:
+      min: 3
+      max: 30
+      value: 8
+      default: 8
+  # Off, each jar keeps its own colors. On, every jar is drawn in these two.
+  - name: Draw the jar in my colors
+    id: custom_colors
+    type: toggle
+    section: colors
+    attributes:
+      value: false
+      default: false
+  - name: Jar color
+    id: jar_color
+    type: color
+    section: colors
+    attributes:
+      value: 7048d8
+      default: 7048d8
+  - name: Trim color
+    id: trim_color
+    type: color
+    section: colors
+    attributes:
+      value: e6e0f5
+      default: e6e0f5
+  - name: Text
+    id: text_color
+    type: color
+    section: colors
+    attributes:
+      value: ffffff
+      default: ffffff
+  - name: Coins
+    id: coin_color
+    type: color
+    section: colors
+    attributes:
+      value: ffc93c
+      default: ffc93c
+  - name: Countdown bar
+    id: bar_color
+    type: color
+    section: colors
+    attributes:
+      value: e8222b
+      default: e8222b
+  - name: Message and gifter background
+    id: panel_color
+    type: color
+    section: colors
+    attributes:
+      value: 1f1f23
+      default: 1f1f23
