@@ -41,7 +41,8 @@ body {
   color: var(--text-color);
 }
 
-/* Placed and sized by the jar: the gifts' canvas covers only the jar and the room above it. */
+/* Placed and sized by the jar: the gifts' canvas covers only the jar and the room above it, up to
+   the page's top. */
 #gifts,
 #spill {
   position: absolute;

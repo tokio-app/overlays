@@ -38,7 +38,7 @@ fields:
     section: jar
     attributes:
       min: 30
-      max: 300
+      max: 1000
       value: 150
       default: 150
   - name: Let the gifts overflow the jar

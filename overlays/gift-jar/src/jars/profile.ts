@@ -102,13 +102,15 @@ export const WALL_THICKNESS = 40;
 
 /**
  * Thin rectangles along an inner wall, lying just outside it so the gifts rest against the wall
- * itself. The first and last walls reach far above the mouth to keep gifts from bouncing out.
+ * itself. The first and last walls reach well past the page's top, where gifts drop in from, to
+ * keep them from bouncing out: every jar's box starts less than 200 below the page's top, and the
+ * biggest gift at most 85 above it.
  */
 export function walls(outline: Point[]): Wall[] {
   const points = simplify(outline);
   const first = points[0];
   const last = points[points.length - 1];
-  const list = [{ x: first.x, y: -160 }, ...points, { x: last.x, y: -160 }];
+  const list = [{ x: first.x, y: -400 }, ...points, { x: last.x, y: -400 }];
   const result: Wall[] = [];
   for (let i = 0; i < list.length - 1; i++) {
     const a = list[i];

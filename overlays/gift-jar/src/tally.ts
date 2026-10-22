@@ -32,7 +32,7 @@ export interface Gifting {
 // Saved across reloads. Gifters below this start over, which keeps the save small.
 const SAVED_GIFTERS = 500;
 // The slider's top value.
-const SAVED_DROPS = 300;
+const SAVED_DROPS = 1000;
 // A lower count this soon after a streak's last event is a late update, not a new streak.
 // Updates can arrive out of order within a batch, and TikTok closes a combo 3 to 4 s after its
 // last one, so a new combo comes later than this.
