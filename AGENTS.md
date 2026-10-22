@@ -57,6 +57,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 - Connect with `window.__OVERLAY_ID__ || new URLSearchParams(location.search).get("id")`, as the template does, so dev and imported builds work without edits.
 - Overlays use `@tokioapp/overlay` (`../tokio-event-loader`, MIT) from npm, bundled into the build. Don't load it from a CDN, so overlays work offline and pin the version they were tested with.
 - Read config values defensively (`typeof config.title === "string"`): `ConfigData` values can be strings, numbers, booleans or gifts.
+- Each overlay stands alone; code two overlays share is copied, since a release only diffs an overlay's own folder. `magic-jar` is `gift-jar` with drawn jars: its `src/jar.ts`, `tally.ts`, `gifts.ts`, `icons.ts` and the helpers in `src/jars/geometry.ts` are the same code as gift-jar's (`jar.ts` byte for byte). Put a fix to them in both and bump both versions.
 
 ## Releases
 
