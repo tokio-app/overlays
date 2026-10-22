@@ -67,10 +67,7 @@ const DropdownSetting = z.object({
 
 const ColorValue = z
   .string()
-  .regex(
-    /^[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/i,
-    "Must be a 6 or 8-character hex code",
-  );
+  .regex(/^[0-9a-f]{6}([0-9a-f]{2})?$/i, "Must be a 6 or 8-character hex code");
 
 const ColorSetting = z.object({
   ...BaseSetting,
@@ -155,7 +152,7 @@ export const OverlayConfigSchema = z
         ctx.addIssue({
           code: "custom",
           message: `Invalid section: '${field.section}' is not defined in the sections array.`,
-          path: ["config", index, "section"],
+          path: ["fields", index, "section"],
         });
       }
 
@@ -163,7 +160,7 @@ export const OverlayConfigSchema = z
         ctx.addIssue({
           code: "custom",
           message: `Duplicate field ID found: '${field.id}'. Each field must have a unique ID.`,
-          path: ["config", index, "id"],
+          path: ["fields", index, "id"],
         });
       }
 
