@@ -50,7 +50,7 @@ See [Building an overlay](https://tokio.ialfaro.com/docs/developers/building-an-
 1. In Tokio, turn on **Settings → Overlay Server**.
 2. On **Tools → Test Overlays**, create a test ID.
 3. Run `yarn dev <id>` and open the page with `?id=<test ID>`, for example `http://localhost:5173/?id=<test ID>`.
-4. Click **Test** in Tokio. It sends the overlay a sample of every LIVE event.
+4. Click **Test** in Tokio. It sends the overlay every LIVE event, carrying on from the last test: the same viewers come back, likes and coins add up, and a gift streak grows over a few clicks before it ends.
 
 The template connects with `window.__OVERLAY_ID__` and falls back to the `id` in the URL, so there's nothing to change before you import it.
 
