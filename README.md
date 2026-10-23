@@ -12,7 +12,7 @@ To add one by hand instead:
 
 1. Open the [latest release](https://github.com/tokio-app/overlays/releases/latest), or the release `overlays.json` lists for the overlay you want, and download its zip.
 2. Extract it.
-3. In Tokio, import the extracted folder in **Settings → Imported Overlays**. Imported overlays don't get updates.
+3. In Tokio, import the extracted folder in **Settings → Overlay Library**. Imported overlays don't get updates.
 
 See [Adding an overlay](https://tokio.ialfaro.com/docs/guides/adding-an-overlay/) to show it on stream.
 

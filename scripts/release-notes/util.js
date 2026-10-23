@@ -5,7 +5,7 @@ import { z } from "zod";
 const root = resolve(import.meta.dirname, "../..");
 
 const INTRO =
-  "Overlays for [Tokio](https://tokio.ialfaro.com). Download an overlay's zip, extract it and import the folder in **Settings → Imported Overlays**. `overlays.json` lists every overlay, including those released earlier.";
+  "Overlays for [Tokio](https://tokio.ialfaro.com). Download an overlay's zip, extract it and import the folder in **Settings → Overlay Library**. `overlays.json` lists every overlay, including those released earlier.";
 
 /**
  * Release note sections in order. Each commit goes to the first section it matches.

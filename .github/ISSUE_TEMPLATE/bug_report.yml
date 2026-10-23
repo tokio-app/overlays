@@ -21,7 +21,7 @@ body:
     id: overlay-version
     attributes:
       label: Overlay version
-      description: Shown next to the overlay in **Settings → Imported Overlays**.
+      description: Shown next to the overlay in **Settings → Overlay Library**.
       placeholder: 1.0.0
     validations:
       required: false
