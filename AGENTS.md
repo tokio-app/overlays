@@ -46,7 +46,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 
 ## Overlays
 
-- An overlay is `overlays/<id>/`. `<id>` is kebab-case, names the zip and the catalog entry, and never changes once released: Tokio installs the overlay under it, so it's also the overlay's URL (`http://tokio-app.local:37891/<id>/`). `alerts` and `timer` are taken: Tokio serves each alert's own overlay under `/alerts/`, and its countdown timer's at `/timer/`. Folders starting with `_` are never released.
+- An overlay is `overlays/<id>/`. `<id>` is kebab-case, names the zip and the catalog entry, and never changes once released: Tokio installs the overlay under it, so it's also the overlay's URL (`http://tokio-app.local:37891/<id>/`). `alerts`, `timer` and `games` are taken: Tokio serves each alert's own overlay under `/alerts/`, its countdown timer's at `/timer/` and its games overlay's at `/games/`. Folders starting with `_` are never released.
 - `preview.png` is optional. Tokio's **Official Overlays** and the website's Overlays page show it at 16:9, so make it 1280×720.
 - Delete an overlay with `yarn delete <id>`, not by hand: it refuses to drop uncommitted changes and updates `yarn.lock`. The next release lists it as removed and drops it from the catalog. `_template` can't be deleted.
 - The contract is small: `package.json` with a `build` script that writes a static site to `dist/`, plus `info.yaml`, `config.yaml` (when `config: true`) and `index.html` with the setup block. `dev` and `typecheck` scripts are optional; `yarn typecheck` runs the ones that exist.
@@ -77,7 +77,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 
 - `scripts/lib/schema.js` mirrors `OverlayMetaSchema` (`tokio/src/common/schemas/store.ts`), `OverlayConfigSchema` (`tokio/src/common/schemas/overlay.ts`) and `SCRIPT_REGEX` (`tokio/src/main/services/overlay/common/index.ts`). Update it when those change.
 - `validate.js` mirrors `processOverlay` and `hasSetupBlock` (same file as `SCRIPT_REGEX`). If Tokio's import accepts or rejects something new, follow it.
-- Tokio installs from the catalog (`tokio/src/main/services/overlay/common/catalog.ts`). It reads schema 1 and checks each zip's size and SHA-256 against the catalog. It only downloads zips and previews from this repo's release URLs (`https://github.com/tokio-app/overlays/releases/download/`), and drops entries whose id isn't kebab-case or is `alerts` or `timer`. An update keeps the settings whose field id and type are unchanged, so keep field ids stable across versions.
+- Tokio installs from the catalog (`tokio/src/main/services/overlay/common/catalog.ts`). It reads schema 1 and checks each zip's size and SHA-256 against the catalog. It only downloads zips and previews from this repo's release URLs (`https://github.com/tokio-app/overlays/releases/download/`), and drops entries whose id isn't kebab-case or is `alerts`, `timer` or `games`. An update keeps the settings whose field id and type are unchanged, so keep field ids stable across versions.
 - The LIVE events in `.github/ISSUE_TEMPLATE/overlay_request.yml` mirror `TOKIO_EVENTS` (the `tokio:event:*` ones). Keep the server port (`37891`) and event names as Tokio has them.
 
 ## Licensing
