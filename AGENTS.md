@@ -56,7 +56,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 - `package.json` needs a `description` (shown in the catalog). Its `version` must equal `info.yaml`'s; Yarn 1 ignores workspaces without one.
 - Connect with `window.__OVERLAY_ID__ || new URLSearchParams(location.search).get("id")`, as the template does, so dev and imported builds work without edits.
 - Overlays use `@tokioapp/overlay` (`../tokio-event-loader`, MIT) from npm, bundled into the build. Don't load it from a CDN, so overlays work offline and pin the version they were tested with.
-- Read config values defensively (`typeof config.title === "string"`): `ConfigData` values can be strings, numbers, booleans or gifts.
+- Read config values defensively (`typeof config.title === "string"`): `ConfigData` values can be strings, numbers, booleans, gifts or a table's rows (objects of cells keyed by column id).
 - Each overlay stands alone; code two overlays share is copied, since a release only diffs an overlay's own folder. `magic-jar` is `gift-jar` with drawn jars: its `src/jar.ts`, `tally.ts`, `gifts.ts`, `icons.ts` and the helpers in `src/jars/geometry.ts` are the same code as gift-jar's (`jar.ts` byte for byte). Put a fix to them in both and bump both versions.
 
 ## Releases
@@ -77,7 +77,8 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 
 - `scripts/lib/schema.js` mirrors `OverlayMetaSchema` (`tokio/src/common/schemas/store.ts`), `OverlayConfigSchema` (`tokio/src/common/schemas/overlay.ts`) and `SCRIPT_REGEX` (`tokio/src/main/services/overlay/common/index.ts`). Update it when those change.
 - `validate.js` mirrors `processOverlay` and `hasSetupBlock` (same file as `SCRIPT_REGEX`). If Tokio's import accepts or rejects something new, follow it.
-- Tokio installs from the catalog (`tokio/src/main/services/overlay/common/catalog.ts`). It reads schema 1 and checks each zip's size and SHA-256 against the catalog. It only downloads zips and previews from this repo's release URLs (`https://github.com/tokio-app/overlays/releases/download/`), and drops entries whose id isn't kebab-case or is `alerts`, `timer` or `games`. An update keeps the settings whose field id and type are unchanged, so keep field ids stable across versions.
+- Tokio installs from the catalog (`tokio/src/main/services/overlay/common/catalog.ts`). It reads schema 1 and checks each zip's size and SHA-256 against the catalog. It only downloads zips and previews from this repo's release URLs (`https://github.com/tokio-app/overlays/releases/download/`), and drops entries whose id isn't kebab-case or is `alerts`, `timer` or `games`. An update keeps the settings whose field id and type are unchanged, so keep field ids stable across versions. A table also keeps its cells by column id and type, so keep column ids stable too.
+- The `font` and `table` setting types need the Tokio release that brings them (newer than 0.1.1-beta.1); older versions refuse any `config.yaml` with them. No official overlay uses them before that release is out.
 - The LIVE events in `.github/ISSUE_TEMPLATE/overlay_request.yml` mirror `TOKIO_EVENTS` (the `tokio:event:*` ones). Keep the server port (`37891`) and event names as Tokio has them.
 
 ## Licensing

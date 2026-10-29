@@ -4,7 +4,7 @@ import { z } from "zod";
 // the app. Keep in sync with tokio-app/tokio:
 // - SCRIPT_REGEX: src/main/services/overlay/common/index.ts
 // - OverlayMetaSchema: src/common/schemas/store.ts
-// - OverlayConfigSchema: src/common/schemas/overlay.ts
+// - OverlayConfigSchema: src/common/schemas/overlay.ts (FONT_MAX_LENGTH: src/common/schemas/timer.ts)
 
 // Where Tokio writes the overlay's ID, and its settings when it has them.
 export const SCRIPT_REGEX = /<script id="tokio-setup">[\s\S]*?<\/script>/i;
@@ -117,6 +117,71 @@ const SliderSetting = z.object({
   }),
 });
 
+// A font's name, "" for the overlay's own font. 60 is FONT_MAX_LENGTH in
+// tokio/src/common/schemas/timer.ts.
+const FontValue = z.string().max(60);
+
+const FontSetting = z.object({
+  ...BaseSetting,
+  type: z.literal("font"),
+  attributes: z.object({
+    value: FontValue,
+    default: FontValue,
+  }),
+});
+
+// A table's column: a field without its section and value, whose default
+// fills the cell of a new row. A slider has no room for its number in a cell.
+const ColumnSchema = z.discriminatedUnion("type", [
+  InputSetting.omit({ section: true }).extend({
+    attributes: InputSetting.shape.attributes.omit({ value: true }),
+  }),
+  DropdownSetting.omit({ section: true }).extend({
+    attributes: DropdownSetting.shape.attributes.omit({ value: true }),
+  }),
+  ColorSetting.omit({ section: true }).extend({
+    attributes: ColorSetting.shape.attributes.omit({ value: true }),
+  }),
+  CheckSetting.omit({ section: true }).extend({
+    attributes: CheckSetting.shape.attributes.omit({ value: true }),
+  }),
+  ToggleSetting.omit({ section: true }).extend({
+    attributes: ToggleSetting.shape.attributes.omit({ value: true }),
+  }),
+  GiftsSetting.omit({ section: true }).extend({
+    attributes: GiftsSetting.shape.attributes.omit({ value: true }),
+  }),
+  FontSetting.omit({ section: true }).extend({
+    attributes: FontSetting.shape.attributes.omit({ value: true }),
+  }),
+]);
+
+// Each row's cells by column id. The config's check fits them to the columns.
+const Rows = z.array(
+  z.record(
+    z.string(),
+    z.union([
+      z.string(),
+      z.number(),
+      z.boolean(),
+      z.array(z.string()),
+      z.array(z.number()),
+    ]),
+  ),
+);
+
+const TableSetting = z.object({
+  ...BaseSetting,
+  type: z.literal("table"),
+  attributes: z.object({
+    columns: z.array(ColumnSchema).min(1),
+    // The most rows the streamer can add, no limit without it
+    max: z.number().int().min(1).optional(),
+    value: Rows,
+    default: Rows,
+  }),
+});
+
 const FieldsSchema = z.discriminatedUnion("type", [
   InputSetting,
   DropdownSetting,
@@ -125,6 +190,8 @@ const FieldsSchema = z.discriminatedUnion("type", [
   ToggleSetting,
   GiftsSetting,
   SliderSetting,
+  FontSetting,
+  TableSetting,
 ]);
 
 export const OverlayConfigSchema = z
@@ -165,5 +232,72 @@ export const OverlayConfigSchema = z
       }
 
       seenFieldIds.add(field.id);
+
+      if (field.type === "table") checkTable(field, index, ctx);
     });
   });
+
+/**
+ * A table's column ids are its own, it has no more rows than its max, and each
+ * row fits its columns.
+ * @param {z.infer<typeof TableSetting>} table
+ * @param {number} index
+ * @param {z.RefinementCtx} ctx
+ */
+function checkTable({ attributes }, index, ctx) {
+  const path = ["fields", index, "attributes"];
+  const seenColumnIds = new Set();
+
+  attributes.columns.forEach((column, c) => {
+    if (seenColumnIds.has(column.id)) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Duplicate column ID found: '${column.id}'. Each column of a table must have a unique ID.`,
+        path: [...path, "columns", c, "id"],
+      });
+    }
+    seenColumnIds.add(column.id);
+  });
+
+  for (const key of /** @type {const} */ (["value", "default"])) {
+    const rows = attributes[key];
+    if (attributes.max !== undefined && rows.length > attributes.max) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Too many rows: ${rows.length}, but the table allows ${attributes.max}.`,
+        path: [...path, key],
+      });
+    }
+
+    rows.forEach((row, r) => {
+      if (!fitsColumns(row, attributes.columns)) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Invalid row: it needs a value of its column's kind for each column, keyed by the column's ID, and nothing else.",
+          path: [...path, key, r],
+        });
+      }
+    });
+  }
+}
+
+/**
+ * Whether a row has a cell for each column, each one a value the column could
+ * have as its default, and no other cell.
+ * @param {Record<string, unknown>} row
+ * @param {z.infer<typeof ColumnSchema>[]} columns
+ */
+function fitsColumns(row, columns) {
+  return (
+    Object.keys(row).length === columns.length &&
+    columns.every(
+      (column) =>
+        Object.hasOwn(row, column.id) &&
+        ColumnSchema.safeParse({
+          ...column,
+          attributes: { ...column.attributes, default: row[column.id] },
+        }).success,
+    )
+  );
+}
