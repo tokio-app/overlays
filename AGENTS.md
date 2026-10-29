@@ -78,7 +78,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 - `scripts/lib/schema.js` mirrors `OverlayMetaSchema` (`tokio/src/common/schemas/store.ts`), `OverlayConfigSchema` (`tokio/src/common/schemas/overlay.ts`) and `SCRIPT_REGEX` (`tokio/src/main/services/overlay/common/index.ts`). Update it when those change.
 - `validate.js` mirrors `processOverlay` and `hasSetupBlock` (same file as `SCRIPT_REGEX`). If Tokio's import accepts or rejects something new, follow it.
 - Tokio installs from the catalog (`tokio/src/main/services/overlay/common/catalog.ts`). It reads schema 1 and checks each zip's size and SHA-256 against the catalog. It only downloads zips and previews from this repo's release URLs (`https://github.com/tokio-app/overlays/releases/download/`), and drops entries whose id isn't kebab-case or is `alerts`, `timer` or `games`. An update keeps the settings whose field id and type are unchanged, so keep field ids stable across versions. A table also keeps its cells by column id and type, so keep column ids stable too.
-- The `font` and `table` setting types need the Tokio release that brings them (newer than 0.1.1-beta.1); older versions refuse any `config.yaml` with them. `social-links` uses both, so don't tag a release before that Tokio release is out.
+- A new setting type works only from the Tokio release that adds it, since older versions refuse any `config.yaml` with it. Don't tag a release with an overlay that uses one before that Tokio release is out.
 - The LIVE events in `.github/ISSUE_TEMPLATE/overlay_request.yml` mirror `TOKIO_EVENTS` (the `tokio:event:*` ones). Keep the server port (`37891`) and event names as Tokio has them.
 
 ## Licensing
