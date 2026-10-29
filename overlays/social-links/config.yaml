@@ -32,6 +32,8 @@ fields:
                 label: YouTube
               - value: x
                 label: X
+              - value: tiktok
+                label: TikTok
               - value: twitch
                 label: Twitch
               - value: kick

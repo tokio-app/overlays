@@ -86,7 +86,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 - The repo's own code is MIT (`LICENSE`). `scripts/lib/schema.js` and `scripts/release-notes/` are copied from Tokio, whose source is MIT too.
 - Check the license of every dependency you add or upgrade, in overlays too: it ships inside the zips. Ask before adding anything copyleft (GPL, AGPL, LGPL, MPL, CC BY-SA), including fonts, images and sounds.
 - Assets you add (images, fonts, sounds) must be ours or under a license that allows redistribution; note third-party ones in the overlay's folder.
-- Don't use TikTok's logo or branding in overlays or previews. Tokio is not affiliated with TikTok or ByteDance.
+- Don't use TikTok's logo or branding in overlays or previews. Tokio is not affiliated with TikTok or ByteDance. The one exception, which the user approved, is TikTok in Social Links' list of platforms, so a streamer can list a TikTok account there. Its preview still shows no TikTok.
 
 ## Conventions
 
