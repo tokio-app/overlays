@@ -1,0 +1,276 @@
+# The settings streamers see in Tokio's gallery. Each field's id is a key of
+# window.__OVERLAY_CONFIG__. Keep the defaults in index.html's setup block in sync.
+# Field, column and option ids are kept across updates, so don't rename them.
+sections:
+  - name: Accounts
+    id: accounts
+  - name: Timing
+    id: timing
+  - name: Card
+    id: card
+  - name: Colors
+    id: colors
+fields:
+  - name: Shown in this order
+    id: accounts
+    type: table
+    section: accounts
+    attributes:
+      max: 10
+      columns:
+        - name: Platform
+          id: platform
+          type: dropdown
+          attributes:
+            multiple: false
+            searchable: true
+            default: instagram
+            options:
+              - value: instagram
+                label: Instagram
+              - value: youtube
+                label: YouTube
+              - value: x
+                label: X
+              - value: twitch
+                label: Twitch
+              - value: kick
+                label: Kick
+              - value: facebook
+                label: Facebook
+              - value: discord
+                label: Discord
+              - value: snapchat
+                label: Snapchat
+              - value: threads
+                label: Threads
+              - value: bluesky
+                label: Bluesky
+              - value: reddit
+                label: Reddit
+              - value: pinterest
+                label: Pinterest
+              - value: spotify
+                label: Spotify
+              - value: soundcloud
+                label: SoundCloud
+              - value: patreon
+                label: Patreon
+              - value: kofi
+                label: Ko-fi
+              - value: paypal
+                label: PayPal
+              - value: cashapp
+                label: Cash App
+              - value: venmo
+                label: Venmo
+              - value: steam
+                label: Steam
+              - value: linktree
+                label: Linktree
+              - value: whatsapp
+                label: WhatsApp
+              - value: telegram
+                label: Telegram
+              - value: github
+                label: GitHub
+              - value: website
+                label: Website
+        - name: Username
+          id: username
+          type: input
+          attributes:
+            mode: text
+            placeholder: "@yourname"
+            default: ""
+        - name: Icon color
+          id: icon_color
+          type: color
+          attributes:
+            default: "f1f5f9"
+        - name: Icon background
+          id: icon_background
+          type: color
+          attributes:
+            default: "f43f5e"
+      value:
+        - platform: instagram
+          username: ""
+          icon_color: "f1f5f9"
+          icon_background: "f43f5e"
+        - platform: youtube
+          username: ""
+          icon_color: "f1f5f9"
+          icon_background: "f43f5e"
+        - platform: x
+          username: ""
+          icon_color: "f1f5f9"
+          icon_background: "f43f5e"
+      default:
+        - platform: instagram
+          username: ""
+          icon_color: "f1f5f9"
+          icon_background: "f43f5e"
+        - platform: youtube
+          username: ""
+          icon_color: "f1f5f9"
+          icon_background: "f43f5e"
+        - platform: x
+          username: ""
+          icon_color: "f1f5f9"
+          icon_background: "f43f5e"
+  - name: Layout
+    id: layout
+    type: dropdown
+    section: accounts
+    attributes:
+      multiple: false
+      value: one
+      default: one
+      options:
+        - value: one
+          label: One at a time
+        - value: all
+          label: All at once
+  - name: Seconds per account
+    id: account_seconds
+    type: slider
+    section: accounts
+    attributes:
+      min: 3
+      max: 30
+      value: 6
+      default: 6
+  - name: When it shows
+    id: visibility
+    type: dropdown
+    section: timing
+    attributes:
+      multiple: false
+      value: always
+      default: always
+      options:
+        - value: always
+          label: All the time
+        - value: interval
+          label: Every few minutes
+        - value: command
+          label: Only on the chat command
+  - name: Minutes hidden between rounds
+    id: hidden_minutes
+    type: slider
+    section: timing
+    attributes:
+      min: 1
+      max: 30
+      value: 5
+      default: 5
+  - name: Chat command (empty turns it off)
+    id: command
+    type: input
+    section: timing
+    attributes:
+      mode: text
+      placeholder: "!socials"
+      value: "!socials"
+      default: "!socials"
+  - name: Name shown
+    id: text
+    type: dropdown
+    section: card
+    attributes:
+      multiple: false
+      value: username
+      default: username
+      options:
+        - value: username
+          label: Username
+        - value: platform
+          label: Platform name
+        - value: both
+          label: Both
+  - name: Follow button
+    id: show_button
+    type: toggle
+    section: card
+    attributes:
+      value: true
+      default: true
+  - name: Button text (empty leaves only the heart)
+    id: button_text
+    type: input
+    section: card
+    attributes:
+      mode: text
+      placeholder: Follow
+      value: Follow
+      default: Follow
+  - name: Font
+    id: font
+    type: font
+    section: card
+    attributes:
+      value: ""
+      default: ""
+  - name: Size (%)
+    id: size
+    type: slider
+    section: card
+    attributes:
+      min: 50
+      max: 200
+      value: 100
+      default: 100
+  - name: Corner radius
+    id: roundness
+    type: slider
+    section: card
+    attributes:
+      min: 0
+      max: 24
+      value: 10
+      default: 10
+  - name: Alignment
+    id: align
+    type: dropdown
+    section: card
+    attributes:
+      multiple: false
+      value: left
+      default: left
+      options:
+        - value: left
+          label: Left
+        - value: center
+          label: Center
+        - value: right
+          label: Right
+  - name: Transition
+    id: transition
+    type: dropdown
+    section: card
+    attributes:
+      multiple: false
+      value: flip
+      default: flip
+      options:
+        - value: flip
+          label: Flip
+        - value: slide
+          label: Slide
+        - value: fade
+          label: Fade
+  - name: Card
+    id: card_color
+    type: color
+    section: colors
+    attributes:
+      value: "18181b"
+      default: "18181b"
+  - name: Text
+    id: text_color
+    type: color
+    section: colors
+    attributes:
+      value: "f1f5f9"
+      default: "f1f5f9"

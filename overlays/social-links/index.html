@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Social Links</title>
+    <!-- Tokio rewrites this block with the overlay's ID and saved settings. Keep it exactly
+         like this, before the scripts that read it, with the defaults from config.yaml. -->
+    <script id="tokio-setup">
+      window.__OVERLAY_ID__ = "";
+      window.__OVERLAY_CONFIG__ = {
+        accounts: [
+          {
+            platform: "instagram",
+            username: "",
+            icon_color: "#f1f5f9",
+            icon_background: "#f43f5e",
+          },
+          {
+            platform: "youtube",
+            username: "",
+            icon_color: "#f1f5f9",
+            icon_background: "#f43f5e",
+          },
+          {
+            platform: "x",
+            username: "",
+            icon_color: "#f1f5f9",
+            icon_background: "#f43f5e",
+          },
+        ],
+        layout: "one",
+        account_seconds: 6,
+        visibility: "always",
+        hidden_minutes: 5,
+        command: "!socials",
+        transition: "flip",
+        text: "username",
+        show_button: true,
+        button_text: "Follow",
+        font: "",
+        size: 100,
+        roundness: 10,
+        align: "left",
+        card_color: "#18181b",
+        text_color: "#f1f5f9",
+      };
+    </script>
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <div id="stage"></div>
+  </body>
+</html>

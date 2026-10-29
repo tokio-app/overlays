@@ -1,0 +1,21 @@
+{
+  "name": "@tokio-overlays/social-links",
+  "version": "1.0.0",
+  "description": "A card with your other social accounts, one at a time or all at once, each with a Follow button.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@tokioapp/overlay": "^1.1.0",
+    "simple-icons": "^16.36.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}
