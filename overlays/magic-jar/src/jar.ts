@@ -16,7 +16,7 @@ import type { Drop } from "./tally";
 export interface JarOptions {
   /** The most gifts in the jar. */
   maxGifts: number;
-  /** A 1-coin gift's diameter in px. Pricier gifts are bigger, up to 2.4 times. */
+  /** A 1-coin gift's diameter in px. Each 10 times the coins doubles it. */
   giftSize: number;
 }
 
@@ -24,6 +24,8 @@ interface Piece {
   body: Body;
   drop: Drop;
   diameter: number;
+  /** Too wide for the jar, so it rests beside it, outside the glass. */
+  beside: boolean;
   /** When it was dropped. */
   since: number;
   /** Steps it was nudged off the heap. */
@@ -45,6 +47,11 @@ interface Ghost {
   /** Outside the glass, so drawn over it. */
   outside: boolean;
 }
+
+// Which gifts are too many: all of them, or with overflow off, those in the jar or those beside it.
+type Extra = "all" | "jar" | "beside";
+
+type Wall = ReturnType<typeof walls>[number];
 
 // A canvas the gifts are drawn on, and its place on the stage in px.
 interface Target {
@@ -96,14 +103,20 @@ const FADE_MS = 400;
 const NUDGE_STEPS = 120;
 // About how long a gift takes to drop into the jar.
 const LANDING_MS = 1000;
+// How fast a gift starts falling, in px a step.
+const START_SPEED = 2;
 // Gifts outside the jar newer than this stay. With no older ones there, the oldest in the jar go
 // instead, so a gift that just landed isn't the first to go.
 const SPILL_MS = 10_000;
+// A full jar lets its oldest gifts go to make room, but none that dropped in more recently than
+// this.
+const SINK_MS = 3000;
 // The gifts may cover this much of the jar's body. Past it the oldest go, so the pile never
 // reaches the neck and blocks the mouth.
 const FILL = 0.6;
 // When the pile reaches the page's top, the oldest go until this much of it is left, so new gifts
-// land where they're seen. At most once per PAGE_SETTLE_MS, as the pile takes a while to settle.
+// land where they're seen. That and a full jar's sinking happen at most once per PAGE_SETTLE_MS,
+// as the pile takes a while to settle.
 const PAGE_ROOM = 0.9;
 const PAGE_SETTLE_MS = 3000;
 // A reload pours this many rows of gifts at once.
@@ -114,8 +127,26 @@ const POUR_FIRST_MS = 50;
 const POUR_FRAME_MS = 25;
 // Pictures aren't perfect circles, so the bodies are a little smaller than they are.
 const BODY_SHRINK = 0.9;
-// The biggest gift, against a 1-coin one.
-const MAX_GROWTH = 2.4;
+// The biggest gift is as wide as the room beside the jar on the narrowest stage, less this, so it
+// still shows whole.
+const BESIDE_MARGIN = 10;
+// Without overflow, the gifts beside the jar have the room on its sides, from the slump's ceiling
+// down to the surface it stands on, packed this full.
+const BESIDE_PACK = 0.7;
+// With overflow, a reload pours only the newest saved gifts that fit under the slump's ceiling out
+// to the stage's sides, packed this full: about what the pile holds live.
+const POUR_PACK = 0.85;
+// matter-js's default density. Bigger gifts get less, so their weight grows with their width
+// rather than their area, and a big one doesn't crush the pile or push gifts through the glass.
+const DENSITY = 0.001;
+// What collides with what: the gifts and those beside the jar, the jar's inside with its chute, the
+// whole glass with the surface the jar stands on, and the stage's sides, which keep the gifts
+// beside the jar on the page.
+const GIFT = 0x1;
+const BESIDE = 0x2;
+const INSIDE = 0x4;
+const OUTSIDE = 0x8;
+const EDGE = 0x10;
 // Only pictures show, so the bodies needn't be round: fewer sides collide faster.
 const GIFT_SIDES = 12;
 // Gift pictures are about 100 to 250 px, so sharper canvases would only cost memory.
@@ -131,9 +162,10 @@ const CELL = 8;
  * cover only the jar and the room above it, up to the page's top, where gifts drop in from.
  *
  * With overflow, the jar fills to the brim and the gifts spill over its rim, down its outside and
- * onto the surface it stands on. Those outside the glass go on a canvas over it, unbent, as wide
- * as the stage. Gifts that leave the page go, and when the pile reaches its top, the oldest go to
- * make room.
+ * onto the surface it stands on. A full jar lets its oldest gifts go as new ones drop in, so the
+ * heap over it sinks, and past the gift limit or the page's top the oldest go too. A gift too wide
+ * for the jar drops beside it onto that surface, with or without overflow. Gifts outside the glass
+ * go on a canvas over it, unbent, as wide as the stage. Gifts that leave the page go.
  *
  * Frames are only drawn while something moves: the loop stops when every gift sleeps.
  */
@@ -152,6 +184,9 @@ export class Jar {
   // The glass's silhouette on the stage, and its bounds, for telling gifts outside it.
   private _outside: Point[] = [];
   private _outsideBox = { left: 0, top: 0, right: 0, bottom: 0 };
+  // The widest gift the jar takes, and the biggest gift, which drops beside it.
+  private _widest = 0;
+  private _biggest = 0;
   private _overflow = false;
   private _walls: Body[] = [];
   private _lenses: Lens[] = [];
@@ -210,6 +245,15 @@ export class Jar {
   setDesign(design: JarDesign, drops: readonly Drop[]) {
     this.clear();
     this._design = design;
+    // Through its mouth, and covering at most a third of what it holds, so one gift can't empty
+    // it or plug its neck.
+    const { left, right } = design.mouth;
+    const third = (design.bodyArea * FILL) / 3;
+    this._widest = Math.min(
+      right - left - 24,
+      (2 * Math.sqrt(third / Math.PI)) / BODY_SHRINK,
+    );
+    this._biggest = (STAGE.minWidth - design.width) / 2 - BESIDE_MARGIN;
     this._columns = Math.ceil(design.width / CELL);
     this._rows = Math.ceil(design.height / CELL);
     this._grid = new Uint8Array(this._columns * this._rows);
@@ -232,8 +276,9 @@ export class Jar {
   }
 
   /**
-   * Lets the gifts overflow the jar, or keeps them in it again: then the gifts outside it fade
-   * out, and so do the oldest until the pile is back under the fill limit.
+   * Lets the gifts overflow the jar, or keeps them in it again: then the gifts that spilled out
+   * fade out, and so do the oldest until the pile is back under the fill limit. Those too wide for
+   * the jar stay beside it.
    */
   setOverflow(overflow: boolean) {
     if (overflow === this._overflow) return;
@@ -243,8 +288,9 @@ export class Jar {
     if (overflow) {
       for (const piece of this._pieces) piece.outside = this.isOutside(piece);
     } else {
-      const outside = this._pieces.filter((piece) => piece.outside);
-      this._pieces = this._pieces.filter((piece) => !piece.outside);
+      const spilled = (piece: Piece) => piece.outside && !piece.beside;
+      const outside = this._pieces.filter(spilled);
+      this._pieces = this._pieces.filter((piece) => !spilled(piece));
       for (const piece of outside) this.letGo(piece, now);
     }
     this._overflow = overflow;
@@ -291,10 +337,10 @@ export class Jar {
   /**
    * Pours saved gifts into the jar a few rows at a time, then lets the pile settle. A full jar
    * takes a while, so the pouring goes on over the next frames instead of freezing the page, and
-   * the gifts show once it's done.
+   * the gifts show once it's done. Only the newest that fit are poured.
    */
   settle(drops: readonly Drop[]) {
-    this._pour = this.pour(drops);
+    this._pour = this.pour(this.fitting(drops));
     this.pourFor(POUR_FIRST_MS);
     if (this._pour) this.blank();
     this.wake();
@@ -330,20 +376,25 @@ export class Jar {
   }
 
   private _tick = (time: number) => {
-    this.frame(time);
-    // Whether any gift is awake is asked of the bodies themselves: a gift released or woken in a
-    // frame that took no step is awake but hasn't moved yet, and stopping then would leave it
-    // hanging where it was until something else woke the loop.
-    const busy =
-      this._queue.length > 0 ||
-      this._pour !== undefined ||
-      this._ghosts.length > 0 ||
-      this._dirty ||
-      this._innerMoved ||
-      this._spillMoved ||
-      this._pieces.some(({ body }) => !body.isSleeping);
-    if (busy) requestAnimationFrame(this._tick);
-    else this._running = false;
+    let busy = true;
+    try {
+      this.frame(time);
+      // Whether any gift is awake is asked of the bodies themselves: a gift released or woken in a
+      // frame that took no step is awake but hasn't moved yet, and stopping then would leave it
+      // hanging where it was until something else woke the loop.
+      busy =
+        this._queue.length > 0 ||
+        this._pour !== undefined ||
+        this._ghosts.length > 0 ||
+        this._dirty ||
+        this._innerMoved ||
+        this._spillMoved ||
+        this._pieces.some(({ body }) => !body.isSleeping);
+    } finally {
+      // Even after a frame that failed, or no later gift would ever drop.
+      if (busy) requestAnimationFrame(this._tick);
+      else this._running = false;
+    }
   };
 
   // Pours for up to `ms`, and draws the gifts once it's done.
@@ -362,6 +413,8 @@ export class Jar {
   // Yields after each step.
   private *pour(drops: readonly Drop[]): Generator<void, void> {
     const { left, right } = this._design.mouth;
+    // Gifts too wide for the jar drop in beside it, one above the other.
+    let besideLift = 0;
     for (let i = 0; i < drops.length;) {
       const batch: Piece[] = [];
       let lift = 0;
@@ -370,6 +423,13 @@ export class Jar {
         let tallest = 0;
         while (i < drops.length) {
           const diameter = this.diameter(drops[i].coins);
+          if (diameter > this._widest) {
+            loadGiftPicture(drops[i].image);
+            this.release(drops[i], this.besideX(diameter), besideLift);
+            besideLift += diameter + 8;
+            i++;
+            continue;
+          }
           if (
             x > this._box.x + left + 4 &&
             x + diameter > this._box.x + right - 4
@@ -419,41 +479,69 @@ export class Jar {
     wipe(this._spillTarget.ctx);
   }
 
-  // Bigger for more coins: 1 coin is 1×, 100 about 1.7×, 1,000 about 2× and 10,000 2.4×. Never
-  // wider than the mouth, so the biggest gift still drops in.
+  // Twice as wide for each 10 times the coins: 10 coins 2×, 100 coins 4×, 1,000 coins 8×. Only
+  // the room beside the jar limits it, so the biggest still shows whole. Gifts wider than the jar
+  // takes drop beside it.
   private diameter(coins: number): number {
-    const growth = Math.min(
-      MAX_GROWTH,
-      1 + 0.35 * Math.log10(Math.max(coins, 1)),
+    return Math.min(
+      this.options.giftSize * 2 ** Math.log10(Math.max(coins, 1)),
+      this._biggest,
     );
-    const { left, right } = this._design.mouth;
-    return Math.min(this.options.giftSize * growth, right - left - 24);
   }
 
-  // Puts a gift over the mouth, just above the page's top, at a random x and with a little spin.
-  // Saved gifts pour in at a given x, from just over the mouth.
+  // Puts a gift just above the page's top: over the mouth at a random x and with a little spin, or
+  // upright over the room beside the jar when it's too wide for it. Saved gifts pour in at a given
+  // x, from just over the mouth, or from above the room beside the jar.
   private release(drop: Drop, at?: number, lift = 0): Piece {
+    const now = performance.now();
     const diameter = this.diameter(drop.coins);
     const radius = (diameter * BODY_SHRINK) / 2;
+    const beside = diameter > this._widest;
     const margin = radius + 6;
-    const left = this._box.x + this._design.mouth.left;
-    const right = this._box.x + this._design.mouth.right;
+    let left = this._box.x + this._design.mouth.left;
+    let right = this._box.x + this._design.mouth.right;
     const x =
       at ??
-      left + margin + Math.random() * Math.max(0, right - left - 2 * margin);
+      (beside
+        ? this.besideX(diameter)
+        : left +
+          margin +
+          Math.random() * Math.max(0, right - left - 2 * margin));
+    if (beside) {
+      left = x - radius;
+      right = x + radius;
+    }
     let y =
-      at === undefined
-        ? -diameter * Math.SQRT1_2
+      at === undefined || beside
+        ? -diameter * Math.SQRT1_2 - lift
         : this._box.y - radius - 4 - lift;
-    // Above the gifts heaped over the opening, so it doesn't drop into them. A live gift minds only
-    // those that dropped in a while ago, as gifts dropping in together slow each other.
-    if (this._overflow) {
-      const now = performance.now();
-      for (const { body, since } of this._pieces) {
+    if (at === undefined) {
+      // A full jar lets its oldest gifts go as a gift drops in, so the heap sinks while it falls.
+      // Without gifts old enough to go, the gifts heaped where it lands make room instead.
+      const sunk =
+        this._overflow &&
+        !beside &&
+        this.heapArea() > 0 &&
+        this.sink(area(diameter), now);
+      if (!sunk) this.makeRoom(left, right, diameter, beside, now);
+      // Above the gifts released just before it that haven't fallen clear yet, so a burst falls
+      // in a column instead of starting on top of itself.
+      for (const { body } of this._pieces) {
         const { min, max } = body.bounds;
-        const resting =
-          body.speed < 1 && (at !== undefined || now - since > LANDING_MS);
-        if (resting && max.x > left && min.x < right) {
+        if (
+          body.velocity.y >= START_SPEED &&
+          max.x > x - radius &&
+          min.x < x + radius &&
+          max.y > y - radius - 2
+        ) {
+          y = Math.min(y, min.y - radius - 2);
+        }
+      }
+    } else if (this._overflow && !beside) {
+      // Above the gifts heaped over the opening, so it doesn't pour into them.
+      for (const { body } of this._pieces) {
+        const { min, max } = body.bounds;
+        if (body.speed < 1 && max.x > left && min.x < right) {
           y = Math.min(y, min.y - radius - 4 - lift);
         }
       }
@@ -464,32 +552,114 @@ export class Jar {
       radius,
       {
         restitution: 0.3,
-        friction: 0.3,
-        frictionStatic: 0.5,
+        // A gift beside the jar grips the pile, so it stays where it lands.
+        friction: beside ? 0.8 : 0.3,
+        frictionStatic: beside ? 1 : 0.5,
         frictionAir: 0.01,
         sleepThreshold: 45,
+        density: (DENSITY * this.options.giftSize) / diameter,
+        collisionFilter: {
+          category: beside ? BESIDE : GIFT,
+          mask: this.mask(beside),
+        },
       },
       GIFT_SIDES,
     );
-    Body.setAngle(body, Math.random() * Math.PI * 2);
-    Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.16);
+    if (beside) {
+      // Upright and never turning, so a big picture reads as what it is.
+      Body.setInertia(body, Infinity);
+    } else {
+      Body.setAngle(body, Math.random() * Math.PI * 2);
+      Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.16);
+    }
     // Hardly sideways, so the long fall from the page's top still ends in the mouth.
-    Body.setVelocity(body, { x: (Math.random() - 0.5) * 0.2, y: 2 });
+    Body.setVelocity(body, {
+      x: (Math.random() - 0.5) * 0.2,
+      y: START_SPEED,
+    });
     Composite.add(this._engine.world, body);
 
     const piece: Piece = {
       body,
       drop,
       diameter,
-      since: performance.now(),
+      beside,
+      since: now,
       nudges: 0,
-      outside: false,
+      outside: beside,
       awake: true,
     };
-    piece.outside = this._overflow && this.isOutside(piece);
+    if (this._overflow) piece.outside = this.isOutside(piece);
     this._pieces.push(piece);
-    this.removeExtra(performance.now());
+    // The canvas over the glass shows once a gift is outside it.
+    if (piece.outside && this._spill.hidden) this.fit();
+    this.removeExtra(now);
     return piece;
+  }
+
+  // A random x over the room on one side of the jar, for a gift too wide for it: the side whose
+  // last such gift came longest ago, so big gifts sent together land apart, and the oldest make
+  // room for the next.
+  private besideX(diameter: number): number {
+    const half = diameter / 2 + 4;
+    const sides = [
+      [half, this._outsideBox.left - half],
+      [this._outsideBox.right + half, this._stageWidth - half],
+    ].filter(([from, to]) => to >= from);
+    const last = ([from, to]: number[]) => {
+      let since = -Infinity;
+      for (const piece of this._pieces) {
+        const { x } = piece.body.position;
+        if (piece.beside && x > from - half && x < to + half) {
+          since = Math.max(since, piece.since);
+        }
+      }
+      return since;
+    };
+    let best = sides[Math.floor(Math.random() * sides.length)] ?? [half, half];
+    for (const side of sides) if (last(side) < last(best)) best = side;
+    return best[0] + Math.random() * (best[1] - best[0]);
+  }
+
+  // Gifts on the heap where a new one lands, so high that it would rest with its middle above the
+  // page's top, fade out to make room for it, as one resting there goes unseen. A gift beside the
+  // jar gets room to rest whole, since few gifts are in its way; over a full jar that would clear
+  // the heap for every gift. A gift is on the heap once its fall stopped, as it falls faster than
+  // it starts: in a burst the heap is still moving.
+  private makeRoom(
+    left: number,
+    right: number,
+    diameter: number,
+    beside: boolean,
+    now: number,
+  ) {
+    const line = (beside ? diameter : diameter / 2) + 8;
+    let removed = false;
+    for (let i = this._pieces.length - 1; i >= 0; i--) {
+      const piece = this._pieces[i];
+      const { bounds, speed, velocity } = piece.body;
+      if (
+        (speed < 1 || velocity.y < START_SPEED) &&
+        bounds.min.y < line &&
+        bounds.max.x > left &&
+        bounds.min.x < right
+      ) {
+        this._pieces.splice(i, 1);
+        this.letGo(piece, now);
+        removed = true;
+      }
+    }
+    if (removed && !this._overflow) {
+      for (const { body } of this._pieces) Sleeping.set(body, false);
+    }
+  }
+
+  // Gifts in the jar collide with its inside. Those beside it, and with overflow every gift,
+  // collide with the whole glass and the surface it stands on, and those beside it with the
+  // stage's sides too.
+  private mask(beside: boolean): number {
+    if (beside) return GIFT | BESIDE | OUTSIDE | EDGE;
+    return GIFT | BESIDE | (this._overflow ? OUTSIDE : INSIDE);
   }
 
   // Puts the jar in the middle of the stage, on its line, moving the gifts with it.
@@ -524,35 +694,60 @@ export class Jar {
     this._dirty = true;
   }
 
-  // The jar's walls. With overflow they're the whole glass, inside and out, and the surface the
-  // jar stands on spans the stage, so spilled gifts pile beside it out to the page's edges.
+  // The jar's walls. Gifts beside it, and with overflow every gift, rest on the whole glass, inside
+  // and out, and on the surface the jar stands on, which spans the stage so they pile beside it
+  // out to the page's edges. Without overflow, the gifts in the jar rest on its inside instead,
+  // which rises in a chute past the page's top. The gifts beside the jar stop at the stage's
+  // sides, so a big one that rolls doesn't leave the page.
   private buildWalls() {
-    const { x, y } = this._box;
     Composite.remove(this._engine.world, this._walls);
-    const list = this._overflow
-      ? glassWalls(this._design.outline, this._design.outside)
-      : walls(this._design.outline);
-    this._walls = list.map((wall) =>
-      Bodies.rectangle(x + wall.x, y + wall.y, wall.length, wall.thickness, {
-        isStatic: true,
-        angle: wall.angle,
-        friction: 0.4,
-        restitution: 0.15,
-      }),
-    );
-    if (this._overflow) {
-      this._walls.push(
-        Bodies.rectangle(
-          this._stageWidth / 2,
-          this._outsideBox.bottom + 50,
-          this._stageWidth,
-          100,
-          { isStatic: true, friction: 0.4, restitution: 0.15 },
+    const { outline, outside } = this._design;
+    const width = this._stageWidth;
+    // A picture is wider than its body, so the sides stand in by the biggest one's overhang.
+    const inset = (this._biggest * (1 - BODY_SHRINK)) / 2;
+    this._walls = [
+      ...glassWalls(outline, outside).map((wall) =>
+        this.wall(this._box.x + wall.x, this._box.y + wall.y, wall, OUTSIDE),
+      ),
+      ...(this._overflow ? [] : walls(outline)).map((wall) =>
+        this.wall(this._box.x + wall.x, this._box.y + wall.y, wall, INSIDE),
+      ),
+      this.wall(
+        width / 2,
+        this._outsideBox.bottom + 50,
+        { length: width, thickness: 100, angle: 0 },
+        OUTSIDE,
+      ),
+      ...[inset - 50, width - inset + 50].map((x) =>
+        this.wall(
+          x,
+          0,
+          { length: 100, thickness: STAGE.height * 4, angle: 0 },
+          EDGE,
         ),
-      );
-    }
+      ),
+    ];
     Composite.add(this._engine.world, this._walls);
-    for (const { body } of this._pieces) Sleeping.set(body, false);
+    for (const piece of this._pieces) {
+      piece.body.collisionFilter.mask = this.mask(piece.beside);
+      Sleeping.set(piece.body, false);
+    }
+  }
+
+  // A static wall centered at x and y. Gifts' masks pick which walls they meet.
+  private wall(
+    x: number,
+    y: number,
+    { length, thickness, angle }: Omit<Wall, "x" | "y">,
+    category: number,
+  ): Body {
+    return Bodies.rectangle(x, y, length, thickness, {
+      isStatic: true,
+      angle,
+      friction: 0.4,
+      restitution: 0.15,
+      collisionFilter: { category },
+    });
   }
 
   // Sizes the canvases and the lenses' layers for the jar's place, the pixel ratio and the
@@ -566,9 +761,9 @@ export class Jar {
     if (key === this._fitted) return;
     this._fitted = key;
 
-    // Room for the biggest gift turned any way at the sides, and up to the page's top, where gifts
-    // drop in from.
-    const reach = biggest * Math.SQRT1_2;
+    // Room for the widest gift the jar takes turned any way at the sides, and up to the page's
+    // top, where gifts drop in from. Wider ones are outside it, on the canvas over the glass.
+    const reach = this._widest * Math.SQRT1_2;
     const stageWidth = Math.round(this._stageWidth * ratio);
     const stageHeight = Math.round(STAGE.height * ratio);
     const left = clamp(Math.floor((box.x - reach - 2) * ratio), 0, stageWidth);
@@ -588,8 +783,8 @@ export class Jar {
     this.size(this._canvas, left, top, right - left, bottom - top);
     this._gifts.width = right - left;
     this._gifts.height = bottom - top;
-    // Only while gifts may be outside the glass, and down to the gifts on the surface the jar
-    // stands on.
+    // Only while gifts may be outside the glass, and down to the biggest gift on the surface the
+    // jar stands on.
     const floor = Math.ceil(
       (this._outsideBox.bottom +
         biggest * (Math.SQRT1_2 - BODY_SHRINK / 2) +
@@ -773,22 +968,28 @@ export class Jar {
     }
   }
 
-  // Whether gifts may be outside the glass: with overflow, or while the last ones fade.
+  // Whether gifts may be outside the glass: with overflow, beside the jar, or while the last ones
+  // fade.
   private spills(): boolean {
-    return this._overflow || this._ghosts.some((ghost) => ghost.outside);
+    return (
+      this._overflow ||
+      this._pieces.some((piece) => piece.outside) ||
+      this._ghosts.some((ghost) => ghost.outside)
+    );
   }
 
-  // Fades out the oldest gifts while the jar holds too many, or more than `limit`. With overflow,
-  // the oldest outside the jar go first, but not ones that only just landed.
+  // Fades out the oldest gifts while there are too many, or more than `limit`. With overflow, the
+  // oldest outside the jar go first, but not ones that only just landed.
   private removeExtra(now: number, limit = this.options.maxGifts) {
     let removed = false;
-    while (this._pieces.length > 1 && this.tooMany(limit)) {
-      const outside = this._overflow
-        ? this._pieces.findIndex(
-            (piece) => now - piece.since > SPILL_MS && piece.outside,
-          )
-        : -1;
-      const [piece] = this._pieces.splice(Math.max(0, outside), 1);
+    for (
+      let extra = this.tooMany(limit);
+      extra && this._pieces.length > 1;
+      extra = this.tooMany(limit)
+    ) {
+      const at = this.oldest(extra, now);
+      if (at < 0) break;
+      const [piece] = this._pieces.splice(at, 1);
       this.letGo(piece, now);
       removed = true;
     }
@@ -799,20 +1000,79 @@ export class Jar {
     }
   }
 
-  private tooMany(limit: number): boolean {
-    if (this._pieces.length > limit) return true;
-    if (this._overflow) return false;
-    let area = 0;
-    for (const { diameter } of this._pieces) {
-      area += Math.PI * ((diameter * BODY_SHRINK) / 2) ** 2;
+  private tooMany(limit: number): Extra | undefined {
+    if (this._pieces.length > limit) return "all";
+    // With overflow the pile grows until it's full, and step() makes room then.
+    if (this._overflow) return undefined;
+    let inside = 0;
+    let beside = 0;
+    for (const piece of this._pieces) {
+      if (piece.beside) beside += area(piece.diameter);
+      else inside += area(piece.diameter);
     }
-    return area > this._design.bodyArea * FILL;
+    return this.over(inside, beside);
+  }
+
+  // Which gifts are past their room without overflow, given the area their bodies cover: those in
+  // the jar past what it holds, or those beside it past the room on its sides.
+  private over(inside: number, beside: number): Extra | undefined {
+    if (inside > this._design.bodyArea * FILL) return "jar";
+    const sides = this._stageWidth - this._design.width;
+    if (beside > this.roomArea(sides) * BESIDE_PACK) return "beside";
+    return undefined;
+  }
+
+  // The oldest of the gifts that are too many, or -1 while they're all still dropping in: a burst
+  // would otherwise fill the jar's room in midair, and its first gifts would go before they land.
+  // A gift has landed once its fall stopped, as it falls faster than it starts.
+  private oldest(extra: Extra, now: number): number {
+    const landed = ({ body }: Piece) => body.velocity.y < START_SPEED;
+    if (extra !== "all") {
+      return this._pieces.findIndex(
+        (piece) => landed(piece) && piece.beside === (extra === "beside"),
+      );
+    }
+    if (this._overflow) {
+      const outside = this._pieces.findIndex(
+        (piece) => now - piece.since > SPILL_MS && piece.outside,
+      );
+      if (outside >= 0) return outside;
+    }
+    return this._pieces.findIndex(landed);
+  }
+
+  // The area between the slump's ceiling and the surface the jar stands on, across `width`.
+  private roomArea(width: number): number {
+    return width * (this._outsideBox.bottom - this.ceiling());
+  }
+
+  // The newest saved gifts that fit in what the jar holds, as a list of their own, since the saved
+  // one grows while they pour. The older ones are let go.
+  private fitting(drops: readonly Drop[]): Drop[] {
+    const pile = this.roomArea(this._stageWidth) * POUR_PACK;
+    let from = drops.length;
+    let inside = 0;
+    let beside = 0;
+    while (from > 0 && drops.length - from < this.options.maxGifts) {
+      const diameter = this.diameter(drops[from - 1].coins);
+      if (diameter > this._widest) beside += area(diameter);
+      else inside += area(diameter);
+      const full = this._overflow
+        ? inside + beside > pile
+        : this.over(inside, beside);
+      if (full) break;
+      from--;
+    }
+    if (this._overflow) {
+      for (const drop of drops.slice(0, from)) this.onRemove?.(drop);
+    }
+    return drops.slice(from);
   }
 
   // Takes a gift out of the world, fading out where it was.
   private letGo(piece: Piece, now: number) {
     Composite.remove(this._engine.world, piece.body);
-    const outside = this._overflow && piece.outside;
+    const { outside } = piece;
     this._ghosts.push({
       drop: piece.drop,
       diameter: piece.diameter,
@@ -855,10 +1115,10 @@ export class Jar {
     return body.position.y < 0 && body.speed < 1;
   }
 
-  // Whether a gift left the stage, or got out of the jar without overflow.
-  private isGone({ body }: Piece): boolean {
+  // Whether a gift left the stage, or got out of the jar it was in without overflow.
+  private isGone({ body, beside }: Piece): boolean {
     const { x, y } = body.position;
-    if (this._overflow)
+    if (this._overflow || beside)
       return x < 0 || x > this._stageWidth || y > STAGE.height;
     const box = this._box;
     return (
@@ -870,7 +1130,9 @@ export class Jar {
 
   private step() {
     Engine.update(this._engine, STEP_MS);
-    if (this._overflow) this.slump();
+    // A gift that couldn't slide off the heap over the jar means the jar is full. Not while
+    // pouring: the pour stacks gifts faster than they spread, and clears up after itself.
+    const stuck = this._overflow && this.slump() && !this._pour;
     const now = performance.now();
     let full = false;
     // Only gifts awake before or after the step can have moved.
@@ -879,18 +1141,18 @@ export class Jar {
       const moved = piece.awake || !piece.body.isSleeping;
       piece.awake = !piece.body.isSleeping;
       if (!moved) continue;
-      // One resting above the page's top means the pile reached it. Not one still dropping in,
-      // as gifts dropping in together slow each other, and not while pouring: the pour stacks
-      // gifts faster than they spread, and clears up after itself.
+      // One resting above the page's top means the pile reached it. Not one still dropping in, or
+      // landed on a heap that's still sinking into a full jar, and not while pouring: the pour
+      // stacks gifts faster than they spread, and clears up after itself.
       const above =
         this._overflow &&
         !this._pour &&
-        now - piece.since > LANDING_MS &&
+        now - piece.since > 2 * LANDING_MS &&
         this.isAbove(piece);
       if (above || this.isGone(piece)) {
         full ||= above;
         this._pieces.splice(i, 1);
-        if (this._overflow) {
+        if (this._overflow || piece.beside) {
           this.letGo(piece, now);
         } else {
           Composite.remove(this._engine.world, piece.body);
@@ -906,14 +1168,18 @@ export class Jar {
           this._spillMoved = true;
         }
       }
-      if (this._overflow && piece.outside) this._spillMoved = true;
+      if (piece.outside) this._spillMoved = true;
       else this._innerMoved = true;
     }
     // The oldest make room for the next gifts, and the pile settles into it: the heap over the
     // mouth is nudged again, as its gifts may have given up.
-    if (full && now - this._fullAt > PAGE_SETTLE_MS) {
+    if ((full || stuck) && now - this._fullAt > PAGE_SETTLE_MS) {
       this._fullAt = now;
-      this.removeExtra(now, Math.floor(this._pieces.length * PAGE_ROOM));
+      if (full) {
+        this.removeExtra(now, Math.floor(this._pieces.length * PAGE_ROOM));
+      } else {
+        this.sink(this.heapArea(), now);
+      }
       for (const piece of this._pieces) {
         piece.nudges = 0;
         Sleeping.set(piece.body, false);
@@ -922,19 +1188,21 @@ export class Jar {
   }
 
   // Discs heap into steep cones, which would rise off the stage over a tall jar. Gifts resting
-  // too high over the rim are nudged off the jar's axis, so the heap slides over the rim instead.
-  // It may rise 1.5 gifts over the rim, but keeps 1.5 gifts of room under the page's top, so the
-  // next gifts land in view.
-  private slump() {
-    const top = this._outsideBox.top;
-    const room = this.options.giftSize * 1.5;
-    const ceiling = Math.min(top, Math.max(top - room, room));
-    const axis = this._box.x + this._box.width / 2;
+  // above the ceiling are nudged off the jar's axis, so the heap slides over the rim instead and
+  // the next gifts land in view. Returns whether a gift over the jar gave up.
+  private slump(): boolean {
+    const ceiling = this.ceiling();
+    const { x, width } = this._box;
+    const axis = x + width / 2;
+    let stuck = false;
     for (const piece of this._pieces) {
       const { body } = piece;
       if (body.position.y > ceiling || body.speed > 1) continue;
       // One wedged in place gives up, so it can sleep.
-      if (piece.nudges++ > NUDGE_STEPS) continue;
+      if (piece.nudges++ > NUDGE_STEPS) {
+        stuck ||= body.position.x > x && body.position.x < x + width;
+        continue;
+      }
       const side = body.position.x < axis ? -1 : 1;
       Sleeping.set(body, false);
       Body.setVelocity(body, {
@@ -942,6 +1210,50 @@ export class Jar {
         y: body.velocity.y,
       });
     }
+    return stuck;
+  }
+
+  // Makes room in a full jar: its oldest gifts go, as many as cover `room`, so the heap over it
+  // sinks in. None that dropped in within SINK_MS go. Returns whether it made all that room.
+  private sink(room: number, now: number): boolean {
+    for (let i = 0; i < this._pieces.length && room > 0;) {
+      const piece = this._pieces[i];
+      if (piece.outside || now - piece.since < SINK_MS) {
+        i++;
+        continue;
+      }
+      this._pieces.splice(i, 1);
+      this.letGo(piece, now);
+      room -= area(piece.diameter);
+    }
+    return room <= 0;
+  }
+
+  // The area of the gifts heaped over the jar above the ceiling: more than it holds.
+  private heapArea(): number {
+    const ceiling = this.ceiling();
+    const { x, width } = this._box;
+    let heap = 0;
+    for (const { body, diameter } of this._pieces) {
+      const { position, speed, velocity } = body;
+      if (
+        (speed < 1 || velocity.y < START_SPEED) &&
+        position.y < ceiling &&
+        position.x > x &&
+        position.x < x + width
+      ) {
+        heap += area(diameter);
+      }
+    }
+    return heap;
+  }
+
+  // 1.5 gifts over the rim, but far enough under the page's top that the widest gift the jar
+  // takes lands on the heap with its middle in view.
+  private ceiling(): number {
+    const top = this._outsideBox.top;
+    const room = this.options.giftSize * 1.5;
+    return Math.min(top, Math.max(top - room, this._widest / 2 + 8));
   }
 
   private frame(time: number) {
@@ -960,10 +1272,27 @@ export class Jar {
     );
     this._last = time;
 
-    const head = this._queue[0];
-    if (head && time >= this._nextRelease && isSettled(head.image)) {
-      this._queue.shift();
-      this.release(head);
+    // The first gift whose picture is ready, so one still loading holds back only gifts like it.
+    // One too wide to share the room beside the jar waits until the last such gift has landed, so
+    // they don't land on each other, but not for long: one can keep sliding on a pile that moves.
+    const huge = this._biggest / 2;
+    const falling = this._pieces.some(
+      ({ diameter, body, since }) =>
+        diameter > huge &&
+        body.velocity.y >= START_SPEED &&
+        time - since < 2 * LANDING_MS,
+    );
+    const next =
+      time >= this._nextRelease
+        ? this._queue.findIndex(
+            (drop) =>
+              isSettled(drop.image) &&
+              !(falling && this.diameter(drop.coins) > huge),
+          )
+        : -1;
+    if (next >= 0) {
+      const [drop] = this._queue.splice(next, 1);
+      this.release(drop);
       this._nextRelease =
         time + RELEASE_MS * Math.min(1, STREAM_QUEUE / this._queue.length);
     }
@@ -1008,7 +1337,7 @@ export class Jar {
     if (spill) wipe(spill.ctx);
 
     for (const { body, drop, diameter, outside } of this._pieces) {
-      const target = this._overflow && outside ? spill : inner;
+      const target = outside ? spill : inner;
       if (!target) continue;
       const { x, y } = body.position;
       this.picture(target, drop, x, y, body.angle, diameter, 1);
@@ -1134,6 +1463,11 @@ function wipe(ctx: CanvasRenderingContext2D) {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+// The area a gift's body covers.
+function area(diameter: number): number {
+  return Math.PI * ((diameter * BODY_SHRINK) / 2) ** 2;
 }
 
 function meets(a: Rect, b: Rect): boolean {

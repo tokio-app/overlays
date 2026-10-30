@@ -1,6 +1,6 @@
 {
   "name": "@tokio-overlays/magic-jar",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Gifts drop into a drawn cup, chest, cauldron or trophy and pile up, with a message for each gift and the gifter's coins.",
   "private": true,
   "type": "module",

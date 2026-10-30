@@ -107,6 +107,10 @@ showDesign(design);
 showColors(design);
 fit();
 addEventListener("resize", fit);
+// Streaming apps reload overlays when scenes change, so the last second's gifts are saved first.
+addEventListener("pagehide", () => {
+  if (saveTimer) save();
+});
 jar.settle(tally.drops);
 jar.start();
 renderTotal();
@@ -264,6 +268,8 @@ function css([r, g, b]: RGB): string {
 // jar stands in the middle and spilled gifts reach the page's edges. A narrow page gets the
 // stage's least width, scaled down to fit.
 function fit() {
+  // A source can be 0 px while it's hidden. The last size stays until it shows.
+  if (!innerWidth || !innerHeight) return;
   const scale = Math.min(
     innerHeight / STAGE.height,
     innerWidth / STAGE.minWidth,
@@ -435,15 +441,17 @@ function setPicture(photo: HTMLElement, url: string) {
 
 function scheduleSave() {
   if (demo || saveTimer) return;
-  saveTimer = setTimeout(() => {
-    saveTimer = undefined;
-    try {
-      localStorage.setItem(storageKey, tally.serialize());
-    } catch {
-      // Storage can be full or turned off. The jar still works, it just won't survive a
-      // reload.
-    }
-  }, 1000);
+  saveTimer = setTimeout(save, 1000);
+}
+
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = undefined;
+  try {
+    localStorage.setItem(storageKey, tally.serialize());
+  } catch {
+    // Storage can be full or turned off. The jar still works, it just won't survive a reload.
+  }
 }
 
 function load(): Tally {
