@@ -1,6 +1,6 @@
 {
   "name": "@tokio-overlays/gift-jar",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Gifts drop into a jar and pile up, with a message for each gift and the gifter's coins.",
   "private": true,
   "type": "module",
