@@ -262,7 +262,7 @@ body {
   filter: drop-shadow(0 0 10px var(--accent-glow));
 }
 
-/* Two strands from the knot, in the ribbon's colors, meeting in the eyelet. */
+/* Two strands from the knot, in the bow's colors, meeting in the eyelet. */
 .cord {
   position: relative;
   z-index: 1;
@@ -282,6 +282,30 @@ body {
 .cord .light {
   stroke: var(--accent-light);
   stroke-width: 1.5;
+}
+
+/* A rope's strands: a dark edge, and twisted plies in the main color over it. */
+.cord.rope .shade {
+  stroke-width: 4.6;
+}
+
+.cord.rope .twist {
+  stroke: url(#rope-twist);
+  stroke-width: 3.2;
+}
+
+.cord.rope .ply {
+  fill: var(--accent);
+}
+
+.cord.rope .groove {
+  fill: var(--accent-deep);
+}
+
+/* main.ts sets data-cord to what the jar is tied with. */
+.tag:not([data-cord="rope"]) .cord.rope,
+.tag[data-cord="rope"] .cord.ribbon {
+  display: none;
 }
 
 /* The card's top corners are cut off, like a gift tag's, and every corner is rounded. Its face is

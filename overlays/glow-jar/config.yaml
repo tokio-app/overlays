@@ -10,6 +10,20 @@ sections:
   - name: Colors
     id: colors
 fields:
+  - name: Jar
+    id: jar
+    type: dropdown
+    section: jar
+    attributes:
+      multiple: false
+      searchable: false
+      value: mason
+      default: mason
+      options:
+        - value: mason
+          label: Mason jar
+        - value: bowl
+          label: Crystal bowl
   - name: Gifts the jar holds
     id: max_gifts
     type: slider

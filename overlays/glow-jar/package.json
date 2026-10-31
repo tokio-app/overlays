@@ -1,7 +1,7 @@
 {
   "name": "@tokio-overlays/glow-jar",
-  "version": "1.0.0",
-  "description": "Gifts drop into a glowing glass jar and pile up, with a bubble for each gift and the top gifter's photo on a tag hanging from its ribbon.",
+  "version": "1.1.0",
+  "description": "Gifts drop into a glowing glass jar or crystal bowl and pile up, with a bubble for each gift and the top gifter's photo on a tag hanging from its bow.",
   "private": true,
   "type": "module",
   "scripts": {

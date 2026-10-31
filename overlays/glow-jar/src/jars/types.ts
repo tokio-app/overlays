@@ -37,6 +37,8 @@ export interface JarPictures {
   sparkles: { x: number; y: number; r: number }[];
   /** A data URL, so its pixels can be read wherever the overlay is served from. */
   walls: string;
+  /** What the tag's cord is, to match what the jar is tied with. */
+  cord: "ribbon" | "rope";
   /** The body's top: once gifts rest above it, the jar is full. */
   bodyTop: number;
   /** The knot the top gifter's tag hangs from. */
@@ -54,7 +56,10 @@ export interface JarDesign extends JarPictures {
    * rim's top on the right. Closed across the rim.
    */
   outside: Point[];
-  /** The gifts drop in between `left` and `right`, above `y`. */
+  /**
+   * The narrowest opening above the body, which the gifts drop through: the mouth, or the neck
+   * under a flared rim. They drop in between `left` and `right`, above `y`.
+   */
   mouth: { left: number; right: number; y: number };
   /** The area inside the body below its top, in px², for how many gifts a reload pours. */
   bodyArea: number;

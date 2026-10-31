@@ -9,6 +9,7 @@
     <script id="tokio-setup">
       window.__OVERLAY_ID__ = "";
       window.__OVERLAY_CONFIG__ = {
+        jar: "mason",
         max_gifts: 150,
         overflow: false,
         gift_size: 20,
@@ -37,15 +38,36 @@
       <canvas id="spill" aria-hidden="true"></canvas>
 
       <!-- A gift tag on the jar's bow, its cord looped through a steel eyelet: the top gifter's
-           photo with a crown on its corner, and their name on a plate. -->
+           photo with a crown on its corner, and their name on a plate. The cord is a ribbon or a
+           twisted rope, like the bow. -->
       <div id="tag" class="tag">
-        <svg class="cord" viewBox="0 0 24 40" aria-hidden="true">
+        <svg class="cord ribbon" viewBox="0 0 24 40" aria-hidden="true">
           <path
             class="shade"
             d="M12 1C5 14 4 27 12 39M12 1C19 14 20 27 12 39"
           />
           <path
             class="light"
+            d="M12 1C5 14 4 27 12 39M12 1C19 14 20 27 12 39"
+          />
+        </svg>
+        <svg class="cord rope" viewBox="0 0 24 40" aria-hidden="true">
+          <pattern
+            id="rope-twist"
+            width="3"
+            height="3"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(-38)"
+          >
+            <rect class="ply" width="3" height="3" />
+            <rect class="groove" width="0.9" height="3" />
+          </pattern>
+          <path
+            class="shade"
+            d="M12 1C5 14 4 27 12 39M12 1C19 14 20 27 12 39"
+          />
+          <path
+            class="twist"
             d="M12 1C5 14 4 27 12 39M12 1C19 14 20 27 12 39"
           />
         </svg>

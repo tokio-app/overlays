@@ -9,11 +9,13 @@ import { GIFT_BOX, SAMPLE_GIFTS } from "./gifts";
 import { COIN, CROWN, PLACEHOLDER, STAR } from "./icons";
 import { Jar } from "./jar";
 import {
-  JAR,
+  DEFAULT_JAR,
+  JARS,
   loadDesign,
   loadLayer,
   placement,
   STAGE,
+  type JarPictures,
   type Point,
   type RGB,
 } from "./jars";
@@ -55,9 +57,9 @@ const totalCoins = document.getElementById("total-coins")!;
 
 const params = new URLSearchParams(location.search);
 // Tokio fills in the ID. While developing, open the page with ?id=<test ID>, made on Tokio's
-// Tools page, ?demo for the sample gifters, or ?edges to draw the jar's map over its art. Tokio's
-// Test button makes up a new gifter for every event, so only the samples (or a real LIVE) show a
-// gifter's coins adding up.
+// Tools page, ?demo for the sample gifters, ?jar=<id> to pick a jar, or ?edges to draw the jar's
+// map over its art. Tokio's Test button makes up a new gifter for every event, so only the samples
+// (or a real LIVE) show a gifter's coins adding up.
 const overlayId = window.__OVERLAY_ID__ || params.get("id") || "";
 // Tokio's Overlays page previews the overlay in an iframe with this name. There, and with ?demo,
 // sample gifters keep sending gifts until the first real one, so the preview doesn't sit empty.
@@ -83,6 +85,7 @@ const SAMPLE_USERS: UserData[] = [
   profilePictures: [`https://picsum.photos/seed/tokio${i + 1}/200/200`],
 }));
 
+let jarId = DEFAULT_JAR;
 let accent = "#f43f5e";
 let maxGifts = 150;
 let giftSize = 20;
@@ -97,13 +100,10 @@ applyConfig(window.__OVERLAY_CONFIG__);
 // The stage's width in px, set by fit().
 let stageWidth = STAGE.minWidth;
 // The jar's edges come from its walls picture, read before anything drops into it.
-const design = await loadDesign(JAR);
-// Its pictures, on canvases the main color repaints.
-const ownColor = parseColor(design.color) ?? [244, 63, 94];
-const [backLayer, frontLayer] = await Promise.all([
-  loadLayer(design.back, design.backTint, ownColor),
-  loadLayer(design.front, design.frontTint, ownColor),
-]);
+let design = await loadDesign(JARS[jarId]);
+let [backLayer, frontLayer] = await loadLayers(design);
+// The jar on the stage, or the one loading to replace it.
+let shownJar = jarId;
 const jar = new Jar(canvas, spill, design, { maxGifts, giftSize });
 jar.setOverflow(overflow);
 // Kept across reloads, since streaming apps reload overlays when scenes change.
@@ -112,11 +112,7 @@ jar.onRemove = (drop) => {
   tally.forget(drop);
   scheduleSave();
 };
-// One bubble for each place the jar has for one.
-const bubbles = [
-  ...design.bubbles.left.map((anchor) => makeBubble("left", anchor)),
-  ...design.bubbles.right.map((anchor) => makeBubble("right", anchor)),
-];
+let bubbles = makeBubbles();
 // The side of the bubble that last took a new gift, so the next one goes to the other.
 let lastSide: Side | undefined;
 // The top gifter on the tag.
@@ -149,6 +145,7 @@ tokio.on(TOKIO_EVENTS.CONFIG, (config) => {
   jar.setOverflow(overflow);
   tally.maxDrops = dropLimit();
   jar.trim();
+  if (jarId !== shownJar) void showJar(jarId);
   showColors();
   renderTotal();
   renderTag();
@@ -173,6 +170,11 @@ tokio.connect(overlayId);
 
 // The keys are the field ids in config.yaml.
 function applyConfig(config: ConfigData) {
+  // ?jar=<id> wins, to look at each jar while developing.
+  const jarValue = params.get("jar") ?? config.jar;
+  if (typeof jarValue === "string" && Object.hasOwn(JARS, jarValue)) {
+    jarId = jarValue;
+  }
   if (typeof config.accent_color === "string") accent = config.accent_color;
   if (typeof config.max_gifts === "number") maxGifts = config.max_gifts;
   if (typeof config.gift_size === "number") giftSize = config.gift_size;
@@ -198,9 +200,36 @@ function applyConfig(config: ConfigData) {
   }
 }
 
-// Puts the jar's pictures and its sparkles on the page.
+// A jar's pictures, on canvases the main color repaints.
+function loadLayers(pictures: JarPictures) {
+  const own = parseColor(pictures.color) ?? [244, 63, 94];
+  return Promise.all([
+    loadLayer(pictures.back, pictures.backTint, own),
+    loadLayer(pictures.front, pictures.frontTint, own),
+  ]);
+}
+
+// Puts another jar on the stage, with the same gifts poured into it. If the jar setting changes
+// again while it loads, the newer one wins.
+async function showJar(id: string) {
+  shownJar = id;
+  const next = await loadDesign(JARS[id]);
+  const layers = await loadLayers(next);
+  if (id !== shownJar) return;
+  design = next;
+  [backLayer, frontLayer] = layers;
+  hideBubbles();
+  bubbles = makeBubbles();
+  jar.setDesign(design, tally.drops);
+  showDesign();
+  showColors();
+}
+
+// Puts the jar's pictures and its sparkles on the page, and ties the tag on with a cord like
+// what the jar is tied with.
 function showDesign() {
   placeDesign();
+  tag.dataset.cord = design.cord;
   jarBack.replaceChildren(backLayer.canvas);
   jarFront.replaceChildren(frontLayer.canvas);
   // Each sparkle twinkles on a beat of its own, so they never pulse together.
@@ -329,6 +358,15 @@ function handleGift(data: GiftData) {
   renderTag();
   renderTotal();
   scheduleSave();
+}
+
+// One bubble for each place the jar has for one, in place of the last jar's.
+function makeBubbles(): Bubble[] {
+  bubbleList.replaceChildren();
+  return [
+    ...design.bubbles.left.map((anchor) => makeBubble("left", anchor)),
+    ...design.bubbles.right.map((anchor) => makeBubble("right", anchor)),
+  ];
 }
 
 // One element for a bubble place, hidden until a gift takes it.

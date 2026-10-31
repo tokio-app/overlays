@@ -17,6 +17,7 @@ export const mason: JarPictures = {
   backTint,
   frontTint,
   walls,
+  cord: "ribbon",
   // Below the shoulder, so the pile stops short of the neck.
   bodyTop: 160,
   tag: { x: 282, y: 116 },

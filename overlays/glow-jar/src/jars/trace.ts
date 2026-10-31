@@ -55,6 +55,19 @@ export async function loadDesign(jar: JarPictures): Promise<JarDesign> {
     throw new Error("The jar's walls picture has no inside, open at the top.");
   }
 
+  // The gifts drop through the narrowest opening above the body: the mouth, or the neck under a
+  // flared rim.
+  let narrowest = 0;
+  for (let i = 1; i < innerLeft.length && innerLeft[i].y < jar.bodyTop; i++) {
+    const width = innerRight[i].x - innerLeft[i].x;
+    if (width < innerRight[narrowest].x - innerLeft[narrowest].x) narrowest = i;
+  }
+  const mouth = {
+    left: innerLeft[narrowest].x,
+    right: innerRight[narrowest].x,
+    y: innerLeft[narrowest].y,
+  };
+
   const bottomLeft = innerLeft[innerLeft.length - 1];
   const bottomRight = innerRight[innerRight.length - 1];
   const outline = simplify([
@@ -68,11 +81,7 @@ export async function loadDesign(jar: JarPictures): Promise<JarDesign> {
     ...jar,
     outline,
     outside,
-    mouth: {
-      left: outline[0].x,
-      right: outline[outline.length - 1].x,
-      y: outline[0].y,
-    },
+    mouth,
     bodyArea: areaBelow(outline, jar.bodyTop),
   };
 }

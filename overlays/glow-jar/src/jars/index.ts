@@ -1,3 +1,4 @@
+import { bowl } from "./bowl";
 import { mason } from "./mason";
 import type { JarPictures } from "./types";
 
@@ -8,9 +9,9 @@ export { loadLayer, type Layer, type RGB } from "./tint";
 
 /**
  * The design stage, in px. Its height is fixed and its width is the page's, at least
- * `minWidth`: the jar's pictures (400) with room for a gift bubble on each side. Pages as wide as
- * 16:9 never need it; narrower ones show the stage a little smaller instead. main.ts scales it to
- * fit.
+ * `minWidth`: the widest jar's pictures (460) with room for a gift bubble on each side. Pages
+ * as wide as 16:9 never need it; narrower ones show the stage a little smaller instead. main.ts
+ * scales it to fit.
  */
 export const STAGE = { height: 700, minWidth: 1180 };
 
@@ -18,7 +19,9 @@ export const STAGE = { height: 700, minWidth: 1180 };
 // above it, with the total under it.
 const BOTTOM = 630;
 
-export const JAR: JarPictures = mason;
+/** The jars, by their value in config.yaml's jar setting. */
+export const JARS: Record<string, JarPictures> = { mason, bowl };
+export const DEFAULT_JAR = "mason";
 
 /** Where a jar's box sits on a stage `stageWidth` px wide. */
 export function placement(jar: JarPictures, stageWidth: number) {
