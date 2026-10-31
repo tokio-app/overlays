@@ -1,0 +1,20 @@
+{
+  "name": "@tokio-overlays/biggest-gift",
+  "version": "1.0.0",
+  "description": "The biggest gift sent on your LIVE, on spinning rays, with the gifter's name and photo, the combo count and the coins. A gift that costs more takes its place.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@tokioapp/overlay": "^1.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

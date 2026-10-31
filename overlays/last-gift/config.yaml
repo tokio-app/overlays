@@ -1,0 +1,222 @@
+# The settings streamers see in Tokio's gallery. Each field's id is a key of
+# window.__OVERLAY_CONFIG__. Keep the defaults in index.html's setup block in sync.
+# Field and option ids are kept across updates, so don't rename them.
+sections:
+  - name: Gift
+    id: gift
+  - name: Look
+    id: look
+  - name: Animations
+    id: animations
+  - name: Colors
+    id: colors
+fields:
+  - name: When it shows
+    id: visibility
+    type: dropdown
+    section: gift
+    attributes:
+      multiple: false
+      value: always
+      default: always
+      options:
+        - value: always
+          label: All the time
+        - value: after_gift
+          label: For a few seconds after each gift
+  - name: Seconds it stays after a gift
+    id: seconds
+    type: slider
+    section: gift
+    attributes:
+      min: 3
+      max: 60
+      value: 10
+      default: 10
+  - name: Clear the last gift after this many hours without gifts
+    id: clear_hours
+    type: slider
+    section: gift
+    attributes:
+      min: 1
+      max: 24
+      value: 6
+      default: 6
+  - name: Title (empty hides it)
+    id: title
+    type: input
+    section: gift
+    attributes:
+      mode: text
+      placeholder: Last gift
+      value: Last gift
+      default: Last gift
+  - name: Show the gifter's photo
+    id: show_photo
+    type: toggle
+    section: gift
+    attributes:
+      value: true
+      default: true
+  - name: Show the combo count (×5)
+    id: show_combo
+    type: toggle
+    section: gift
+    attributes:
+      value: true
+      default: true
+  - name: Show the coins
+    id: show_coins
+    type: toggle
+    section: gift
+    attributes:
+      value: true
+      default: true
+  - name: Layout
+    id: layout
+    type: dropdown
+    section: look
+    attributes:
+      multiple: false
+      value: stacked
+      default: stacked
+      options:
+        - value: stacked
+          label: Stacked
+        - value: row
+          label: In a row
+  - name: Alignment
+    id: align
+    type: dropdown
+    section: look
+    attributes:
+      multiple: false
+      value: center
+      default: center
+      options:
+        - value: left
+          label: Left
+        - value: center
+          label: Center
+        - value: right
+          label: Right
+  - name: Font
+    id: font
+    type: font
+    section: look
+    attributes:
+      value: ""
+      default: ""
+  - name: Size (%)
+    id: size
+    type: slider
+    section: look
+    attributes:
+      min: 50
+      max: 200
+      value: 100
+      default: 100
+  - name: How a new gift comes in
+    id: entrance
+    type: dropdown
+    section: animations
+    attributes:
+      multiple: false
+      value: pop
+      default: pop
+      options:
+        - value: pop
+          label: Pop
+        - value: drop
+          label: Drop
+        - value: spin
+          label: Spin
+        - value: slide
+          label: Slide
+        - value: fade
+          label: Fade
+  - name: Light behind the gift
+    id: light
+    type: dropdown
+    section: animations
+    attributes:
+      multiple: false
+      value: rays
+      default: rays
+      options:
+        - value: rays
+          label: Rays
+        - value: sunburst
+          label: Sunburst
+        - value: spiral
+          label: Spiral
+        - value: spotlights
+          label: Spotlights
+        - value: burst
+          label: Comic burst
+        - value: ripples
+          label: Ripples
+        - value: star
+          label: Star
+        - value: hearts
+          label: Hearts
+        - value: glow
+          label: Glow
+        - value: none
+          label: None
+  - name: Let the light move
+    id: light_moves
+    type: toggle
+    section: animations
+    attributes:
+      value: true
+      default: true
+  - name: Let the gift float
+    id: float
+    type: toggle
+    section: animations
+    attributes:
+      value: true
+      default: true
+  - name: Show sparkles when a gift comes in
+    id: sparkles
+    type: toggle
+    section: animations
+    attributes:
+      value: true
+      default: true
+  - name: Main color
+    id: main_color
+    type: color
+    section: colors
+    attributes:
+      value: f43f5e
+      default: f43f5e
+  - name: Light
+    id: light_color
+    type: color
+    section: colors
+    attributes:
+      value: f43f5e
+      default: f43f5e
+  - name: Name
+    id: name_color
+    type: color
+    section: colors
+    attributes:
+      value: f1f5f9
+      default: f1f5f9
+  - name: Coins
+    id: coin_color
+    type: color
+    section: colors
+    attributes:
+      value: ffc93c
+      default: ffc93c
+  - name: Outline
+    id: outline_color
+    type: color
+    section: colors
+    attributes:
+      value: "18181b"
+      default: "18181b"

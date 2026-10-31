@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biggest Gift</title>
+    <!-- Tokio rewrites this block with the overlay's ID and saved settings. Keep it exactly
+         like this, before the scripts that read it, with the defaults from config.yaml. -->
+    <script id="tokio-setup">
+      window.__OVERLAY_ID__ = "";
+      window.__OVERLAY_CONFIG__ = {
+        visibility: "always",
+        seconds: 10,
+        clear_hours: 6,
+        title: "Biggest gift",
+        show_photo: true,
+        show_combo: true,
+        show_coins: true,
+        layout: "stacked",
+        align: "center",
+        font: "",
+        size: 100,
+        entrance: "pop",
+        light: "rays",
+        light_moves: true,
+        float: true,
+        sparkles: true,
+        main_color: "#f43f5e",
+        light_color: "#f43f5e",
+        name_color: "#f1f5f9",
+        coin_color: "#ffc93c",
+        outline_color: "#18181b",
+      };
+    </script>
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <!-- The biggest gift on its light, between the title and who sent it. Each text is drawn twice in
+         the same place: its outline behind (.back) and its fill over it (.face). -->
+    <div id="stage">
+      <div id="card" class="card" hidden>
+        <div id="title" class="title ink">
+          <span class="back"></span><span class="face"></span>
+        </div>
+        <div class="prize">
+          <div id="light" class="light" aria-hidden="true"></div>
+          <div id="sparks" class="sparks" aria-hidden="true"></div>
+          <div class="float">
+            <div id="pic" class="pic">
+              <img
+                id="gift"
+                class="gift"
+                alt=""
+                decoding="async"
+                referrerpolicy="no-referrer"
+                hidden
+              />
+              <!-- In the gift's place before the first gift, or when its picture doesn't load. -->
+              <svg
+                id="box"
+                class="box"
+                viewBox="0 0 100 100"
+                aria-hidden="true"
+              >
+                <rect
+                  class="body"
+                  x="16"
+                  y="46"
+                  width="68"
+                  height="44"
+                  rx="6"
+                />
+                <path
+                  class="ribbon"
+                  d="M50 34C33 10 15 25 33 34zM50 34C67 10 85 25 67 34z"
+                />
+                <rect class="lid" x="10" y="33" width="80" height="16" rx="5" />
+                <rect class="ribbon" x="43" y="33" width="14" height="57" />
+                <rect class="shine" x="16" y="49" width="68" height="6" />
+              </svg>
+            </div>
+          </div>
+          <div id="combo" class="combo">
+            <div id="combo-count" class="ink">
+              <span class="back"></span><span class="face"></span>
+            </div>
+          </div>
+        </div>
+        <div class="info">
+          <div id="who" class="who">
+            <span id="photo" class="photo"></span>
+            <span id="name" class="name ink">
+              <span class="back"></span><span class="face"></span>
+            </span>
+          </div>
+          <div id="worth" class="worth">
+            <span class="coin"></span>
+            <span id="coins" class="coins ink">
+              <span class="back"></span><span class="face"></span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,614 @@
+:root {
+  /* Set from the overlay's settings by main.ts: the size, the font, and each color's tones. */
+  --scale: 1;
+  --font: "Segoe UI Black", system-ui, sans-serif;
+  --accent: #f43f5e;
+  --accent-light: #f88b9e;
+  --accent-deep: #b93047;
+  --name: #f1f5f9;
+  --name-light: #f7f9fb;
+  --name-deep: #cfd3d6;
+  --coin: #ffc93c;
+  --coin-light: #ffdf8a;
+  --coin-deep: #c2992e;
+  --ray: #f43f5e;
+  --ray-light: #f88b9e;
+  --ray-deep: #b93047;
+  --outline: #18181b;
+  --halo: rgba(68, 18, 26, 0.62);
+  --halo-soft: rgba(68, 18, 26, 0.26);
+  --glow: rgba(249, 152, 168, 0.55);
+
+  font-family: var(--font);
+  /* Everything else is in rem or em, so the size setting scales it all. */
+  font-size: calc(24px * var(--scale));
+}
+
+/* Streaming apps show the page over the video, so keep it transparent. It's never scrolled,
+   so no scrollbars when the browser source is smaller than the page. */
+body {
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* The card in the middle of the page's height, against the side the alignment picks, with room
+   for the light at that side. Each layout sets its sizes here: the light's includes the gift's,
+   since a custom property takes the values of the ones it uses where it's set. */
+#stage {
+  --gift: 5.5rem;
+  --light: calc(5.5rem * 2.6);
+  --title-size: 1.6rem;
+  --name-size: 1.4rem;
+  --coins-size: 1.2rem;
+  --combo-size: 1.5rem;
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 0 calc((var(--light) - var(--gift)) / 2);
+}
+
+#stage[data-layout="row"] {
+  --gift: 3.6rem;
+  --light: calc(3.6rem * 2.4);
+  --title-size: 0.95rem;
+  --name-size: 1.2rem;
+  --coins-size: 1rem;
+  --combo-size: 1.05rem;
+}
+
+#stage[data-align="left"] {
+  justify-content: flex-start;
+}
+
+#stage[data-align="right"] {
+  justify-content: flex-end;
+}
+
+/* Stacked: the title, the gift on its rays, then who sent it and its coins, on one axis. */
+.card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.title {
+  font-size: var(--title-size);
+  letter-spacing: 0.01em;
+}
+
+.prize {
+  position: relative;
+  flex: none;
+  width: var(--gift);
+  height: var(--gift);
+  margin: 0.2rem 0 0.4rem;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+/* In a row: the gift on the left, the title over who sent it on its right. Against the right
+   side it's mirrored, so the gift stays at the page's edge. */
+[data-layout="row"] .card {
+  display: grid;
+  grid-template-areas:
+    "prize title"
+    "prize info";
+  column-gap: 0.9rem;
+  row-gap: 0.2rem;
+  justify-items: start;
+}
+
+[data-layout="row"][data-align="right"] .card {
+  grid-template-areas:
+    "title prize"
+    "info prize";
+  justify-items: end;
+}
+
+[data-layout="row"] .title {
+  grid-area: title;
+  align-self: end;
+}
+
+[data-layout="row"] .prize {
+  grid-area: prize;
+  margin: 0;
+}
+
+[data-layout="row"] .info {
+  grid-area: info;
+  align-self: start;
+  align-items: flex-start;
+}
+
+[data-layout="row"][data-align="right"] .info {
+  align-items: flex-end;
+}
+
+/* Without a title, or without a gift yet, what's left sits level with the gift. */
+[data-layout="row"] .title[hidden] ~ .info,
+[data-layout="row"] .card[data-empty="true"] .title {
+  grid-row: 1 / 3;
+  align-self: center;
+}
+
+/* The light, under everything else on the card. light.ts draws each kind; what moves only
+   moves with data-moves, and each moving part is a layer of its own while it does. */
+.light {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: var(--light);
+  height: var(--light);
+  margin: calc(var(--light) / -2) 0 0 calc(var(--light) / -2);
+  pointer-events: none;
+}
+
+.light > * {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.halo {
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    var(--halo),
+    var(--halo) 25%,
+    var(--halo-soft) 55%,
+    transparent 80%
+  );
+}
+
+.core {
+  inset: 27%;
+  width: auto;
+  height: auto;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgb(255 255 255 / 0.8),
+    var(--glow) 40%,
+    transparent
+  );
+}
+
+[data-moves="true"] .rays-long {
+  animation: turn 45s linear infinite;
+}
+
+[data-moves="true"] .rays-broad {
+  animation: turn 70s linear infinite reverse;
+}
+
+[data-moves="true"] .sunburst {
+  animation: turn 40s linear infinite;
+}
+
+[data-moves="true"] .spiral {
+  animation: turn 16s linear infinite;
+}
+
+/* The two pairs of beams sweep across each other. */
+[data-moves="true"] .beams-a {
+  animation: sweep 5s ease-in-out infinite alternate;
+}
+
+[data-moves="true"] .beams-b {
+  animation: sweep 5s ease-in-out infinite alternate-reverse;
+}
+
+.burst {
+  overflow: visible;
+  filter: drop-shadow(0 0.2rem 0.25rem rgb(0 0 0 / 0.45));
+}
+
+.burst-edge {
+  stroke: var(--outline);
+  stroke-width: 5;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+[data-moves="true"] .burst {
+  animation: throb 1.6s ease-in-out infinite;
+}
+
+/* Still, the rings sit at four sizes, fainter outward. Moving, each one spreads and fades in
+   turn. The halo is the first child. */
+.ripple {
+  box-sizing: border-box;
+  border: 0.16rem solid var(--ray-light);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0.5rem var(--glow),
+    inset 0 0 0.5rem var(--glow);
+}
+
+.ripple:nth-child(2) {
+  opacity: 0.9;
+  transform: scale(0.4);
+}
+
+.ripple:nth-child(3) {
+  opacity: 0.65;
+  transform: scale(0.6);
+}
+
+.ripple:nth-child(4) {
+  opacity: 0.4;
+  transform: scale(0.8);
+}
+
+.ripple:nth-child(5) {
+  opacity: 0.2;
+}
+
+[data-moves="true"] .ripple {
+  animation: ripple 2.8s ease-out infinite;
+}
+
+[data-moves="true"] .ripple:nth-child(3) {
+  animation-delay: -0.7s;
+}
+
+[data-moves="true"] .ripple:nth-child(4) {
+  animation-delay: -1.4s;
+}
+
+[data-moves="true"] .ripple:nth-child(5) {
+  animation-delay: -2.1s;
+}
+
+[data-moves="true"] .star-a {
+  animation: turn 30s linear infinite;
+}
+
+[data-moves="true"] .star-b {
+  animation: twinkle 1.8s ease-in-out infinite;
+}
+
+/* Each heart's middle is on the ring; turning the other way as the ring turns keeps it upright. */
+.heart {
+  position: absolute;
+  width: 18%;
+  height: 18%;
+  margin: -9% 0 0 -9%;
+}
+
+.heart.small {
+  width: 13%;
+  height: 13%;
+  margin: -6.5% 0 0 -6.5%;
+}
+
+.heart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.heart path {
+  fill: var(--ray);
+  stroke: var(--outline);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+.heart .shine {
+  fill: #fff;
+  fill-opacity: 0.55;
+}
+
+[data-moves="true"] .orbit {
+  animation: turn 24s linear infinite;
+}
+
+[data-moves="true"] .heart {
+  animation: turn 24s linear infinite reverse;
+}
+
+.glow-core {
+  inset: 12%;
+}
+
+[data-moves="true"] .glow-core {
+  animation: breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sweep {
+  from {
+    transform: rotate(-22deg);
+  }
+
+  to {
+    transform: rotate(22deg);
+  }
+}
+
+@keyframes throb {
+  0%,
+  100% {
+    transform: scale(1) rotate(-2deg);
+  }
+
+  50% {
+    transform: scale(1.06) rotate(2deg);
+  }
+}
+
+@keyframes ripple {
+  from {
+    opacity: 0.95;
+    transform: scale(0.3);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.82);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+.sparks {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+}
+
+.spark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  filter: drop-shadow(0 0 0.2rem var(--ray-light));
+}
+
+.float {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+}
+
+/* A slow sway, on the compositor too. */
+[data-float="true"] .float {
+  will-change: transform;
+  animation: float 3.4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0.06rem) rotate(-1.2deg);
+  }
+
+  50% {
+    transform: translateY(-0.22rem) rotate(1.2deg);
+  }
+}
+
+.pic,
+.gift,
+.box,
+.spark svg,
+.coin svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.gift {
+  object-fit: contain;
+  filter: drop-shadow(0 0.25rem 0.3rem rgb(0 0 0 / 0.5));
+}
+
+/* A gift box in the main color, outlined like the text. */
+.box {
+  overflow: visible;
+  filter: drop-shadow(0 0.25rem 0.3rem rgb(0 0 0 / 0.5));
+}
+
+.box rect,
+.box path {
+  stroke: var(--outline);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+.box .body {
+  fill: var(--accent);
+}
+
+.box .lid {
+  fill: var(--accent-light);
+}
+
+.box .ribbon {
+  fill: var(--coin);
+}
+
+.box .shine {
+  fill: rgb(0 0 0 / 0.16);
+  stroke: none;
+}
+
+/* A combo's count on the gift's corner, tilted like a sticker. */
+.combo {
+  position: absolute;
+  z-index: 2;
+  right: -0.85em;
+  bottom: 0.05em;
+  font-size: var(--combo-size);
+  font-style: italic;
+  transform: rotate(-8deg);
+}
+
+/* In a row it sits on the gift's outer corner, clear of the text. */
+[data-layout="row"] .combo {
+  right: auto;
+  left: -0.85em;
+}
+
+[data-layout="row"][data-align="right"] .combo {
+  right: -0.85em;
+  left: auto;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  font-size: var(--name-size);
+}
+
+.worth {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  font-size: var(--coins-size);
+}
+
+/* The gifter's photo in a circle, ringed in the main color and the outline. The placeholder
+   stays under the picture. */
+.photo {
+  position: relative;
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #d4d4d4;
+  box-shadow:
+    0 0 0 0.08em var(--accent),
+    0 0 0 0.16em var(--outline),
+    0 0.14em 0.14em 0.1em rgb(0 0 0 / 0.4);
+}
+
+.photo img,
+.photo svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.coin {
+  display: block;
+  flex: none;
+  width: 0.95em;
+  height: 0.95em;
+  border-radius: 50%;
+  color: var(--coin);
+  box-shadow:
+    0 0 0 0.09em var(--outline),
+    0 0.12em 0.1em 0.06em rgb(0 0 0 / 0.4);
+}
+
+/* Outlined text, drawn twice in the same place: the outline with its drop behind, and the fill,
+   lit from above, over it. Older OBS browsers can't paint a stroke under the fill of one text. */
+.ink {
+  display: inline-grid;
+  isolation: isolate;
+}
+
+.ink > span {
+  /* Positioned, so the fill stays over the outline, which its filter puts in a layer of its own. */
+  position: relative;
+  grid-area: 1 / 1;
+  /* Room for the outline, which reaches past the letters. */
+  padding: 0.04em 0.1em;
+}
+
+.ink .back {
+  color: var(--outline);
+  -webkit-text-stroke: 0.22em var(--outline);
+  filter: drop-shadow(0 0.07em 0 var(--outline))
+    drop-shadow(0 0.1em 0.1em rgb(0 0 0 / 0.45));
+}
+
+.ink .face {
+  background: linear-gradient(var(--light), var(--base) 55%, var(--deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.title,
+.combo {
+  --light: var(--accent-light);
+  --base: var(--accent);
+  --deep: var(--accent-deep);
+}
+
+.name {
+  --light: var(--name-light);
+  --base: var(--name);
+  --deep: var(--name-deep);
+}
+
+.coins {
+  --light: var(--coin-light);
+  --base: var(--coin);
+  --deep: var(--coin-deep);
+  font-variant-numeric: tabular-nums;
+}
