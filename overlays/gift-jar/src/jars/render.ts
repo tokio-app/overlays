@@ -527,6 +527,7 @@ export function roundJar(spec: RoundSpec): JarDesign {
     outline: jar.outline,
     outside: jar.outside,
     mouth: jar.mouth,
+    bodyTop: jar.profile.bodyTop,
     bodyArea: jar.bodyArea,
     bubbleX: jar.bubbleX,
     bubbleY: jar.profile.bubbleY,

@@ -58,7 +58,9 @@ export interface JarDesign {
   outside: Point[];
   /** The gifts drop in between `left` and `right`, above `y`. */
   mouth: { left: number; right: number; y: number };
-  /** The area inside the body, in px², for how many gifts fit. */
+  /** The body's top: once gifts rest above it, the jar is full. */
+  bodyTop: number;
+  /** The area inside the body below its top, in px², for how many gifts a reload pours. */
   bodyArea: number;
   /**
    * Where the message's tail touches the glass, on its left side. The jars are symmetric, so on
