@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Glow Jar</title>
+    <!-- Tokio rewrites this block with the overlay's ID and saved settings. Keep it exactly
+         like this, before the scripts that read it, with the defaults from config.yaml. -->
+    <script id="tokio-setup">
+      window.__OVERLAY_ID__ = "";
+      window.__OVERLAY_CONFIG__ = {
+        max_gifts: 150,
+        overflow: false,
+        gift_size: 20,
+        reset_hours: 6,
+        show_total: true,
+        show_bubbles: true,
+        bubble_seconds: 5,
+        show_top_gifter: true,
+        accent_color: "#f43f5e",
+        text_color: "#f1f5f9",
+        coin_color: "#ffc93c",
+      };
+    </script>
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <!-- A stage as wide as the page, scaled to fit it, with the jar in the middle. The jar is
+         two layers of art, its back behind the gifts' canvas and its front over it, so the gifts
+         look inside the glass, with its sparkles between the back and the gifts. Gifts that spill
+         out of the jar go on a canvas over the front. -->
+    <div id="stage">
+      <div id="jar-back" class="jar" aria-hidden="true"></div>
+      <div id="sparkles" class="jar" aria-hidden="true"></div>
+      <canvas id="gifts" aria-hidden="true"></canvas>
+      <div id="jar-front" class="jar" aria-hidden="true"></div>
+      <canvas id="spill" aria-hidden="true"></canvas>
+
+      <!-- A gift tag on the jar's bow, its cord looped through a steel eyelet: the top gifter's
+           photo with a crown on its corner, and their name on a plate. -->
+      <div id="tag" class="tag">
+        <svg class="cord" viewBox="0 0 24 40" aria-hidden="true">
+          <path
+            class="shade"
+            d="M12 1C5 14 4 27 12 39M12 1C19 14 20 27 12 39"
+          />
+          <path
+            class="light"
+            d="M12 1C5 14 4 27 12 39M12 1C19 14 20 27 12 39"
+          />
+        </svg>
+        <div class="card">
+          <span class="eyelet"></span>
+          <span class="frame">
+            <span id="tag-photo" class="photo"></span>
+            <span class="crown"></span>
+          </span>
+          <span id="tag-name" class="name"></span>
+        </div>
+      </div>
+
+      <!-- main.ts fills in one bubble from the template for each place the jar has for one. -->
+      <div id="bubbles"></div>
+
+      <p id="total" class="total">
+        <span class="coin"></span>
+        <span id="total-coins"></span>
+      </p>
+    </div>
+
+    <template id="bubble-template">
+      <p class="bubble">
+        <span class="photo"></span>
+        <span class="name"></span>
+        <img class="gift" alt="" />
+        <span class="coins"></span>
+        <span class="coin"></span>
+      </p>
+    </template>
+  </body>
+</html>

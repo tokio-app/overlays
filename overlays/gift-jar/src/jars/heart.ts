@@ -545,6 +545,7 @@ export const heart: JarDesign = {
   outline,
   outside,
   mouth: { left: CX - RIM.inner, right: CX + RIM.inner, y: MOUTH_Y },
+  bodyTop: BODY_TOP,
   bodyArea: areaBelow(outline, BODY_TOP),
   bubbleX: bubbleEdge((y) => CX - (reach(outerLeft, y) ?? 0), BUBBLE_Y),
   bubbleY: BUBBLE_Y,

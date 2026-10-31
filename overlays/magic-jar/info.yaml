@@ -1,5 +1,5 @@
 # Read by Tokio when the overlay is imported. Keep version equal to package.json's: a release
 # only ships the overlay when it changes.
 name: Magic Jar
-version: 1.1.0
+version: 1.1.1
 config: true

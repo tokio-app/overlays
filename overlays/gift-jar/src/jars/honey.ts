@@ -373,6 +373,7 @@ export const honey: JarDesign = {
   outline,
   outside,
   mouth: { left: CX - 64, right: CX + 64, y: NECK.top },
+  bodyTop: 140,
   bodyArea: areaBelow(outline, 140),
   bubbleX: bubbleEdge(() => CX - R, BUBBLE_Y),
   bubbleY: BUBBLE_Y,

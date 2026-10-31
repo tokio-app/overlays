@@ -1,0 +1,97 @@
+# The settings streamers see in Tokio's gallery. Each field's id is a key of
+# window.__OVERLAY_CONFIG__. Keep the defaults in index.html's setup block in sync.
+sections:
+  - name: Jar
+    id: jar
+  - name: Gift bubbles
+    id: bubbles
+  - name: Top gifter
+    id: gifter
+  - name: Colors
+    id: colors
+fields:
+  - name: Gifts the jar holds
+    id: max_gifts
+    type: slider
+    section: jar
+    attributes:
+      min: 30
+      max: 1000
+      value: 150
+      default: 150
+  - name: Let the gifts overflow the jar
+    id: overflow
+    type: toggle
+    section: jar
+    attributes:
+      value: false
+      default: false
+  - name: Gift size
+    id: gift_size
+    type: slider
+    section: jar
+    attributes:
+      min: 20
+      max: 50
+      value: 20
+      default: 20
+  - name: Empty the jar after this many hours without gifts
+    id: reset_hours
+    type: slider
+    section: jar
+    attributes:
+      min: 1
+      max: 24
+      value: 6
+      default: 6
+  - name: Show the jar's total coins
+    id: show_total
+    type: toggle
+    section: jar
+    attributes:
+      value: true
+      default: true
+  - name: Show a bubble for each gift
+    id: show_bubbles
+    type: toggle
+    section: bubbles
+    attributes:
+      value: true
+      default: true
+  - name: Seconds each bubble stays
+    id: bubble_seconds
+    type: slider
+    section: bubbles
+    attributes:
+      min: 2
+      max: 15
+      value: 5
+      default: 5
+  - name: Show the top gifter on the tag
+    id: show_top_gifter
+    type: toggle
+    section: gifter
+    attributes:
+      value: true
+      default: true
+  - name: Main color
+    id: accent_color
+    type: color
+    section: colors
+    attributes:
+      value: f43f5e
+      default: f43f5e
+  - name: Text
+    id: text_color
+    type: color
+    section: colors
+    attributes:
+      value: f1f5f9
+      default: f1f5f9
+  - name: Coins
+    id: coin_color
+    type: color
+    section: colors
+    attributes:
+      value: ffc93c
+      default: ffc93c
