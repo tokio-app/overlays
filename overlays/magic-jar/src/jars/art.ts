@@ -278,6 +278,7 @@ export function vessel(spec: VesselSpec): JarDesign {
     outline,
     outside: both(spec.silhouette, width),
     mouth: { left: opening.x, right: width - opening.x, y: opening.y },
+    bodyTop: spec.bodyTop,
     bodyArea: areaBelow(outline, spec.bodyTop),
     bubbleX: bubbleEdge(spec.leftmost, spec.bubbleY),
     bubbleY: spec.bubbleY,
