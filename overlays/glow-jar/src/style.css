@@ -1,0 +1,418 @@
+:root {
+  /* Set from the overlay's settings. main.ts mixes the accent's tones from accent_color. */
+  --text-color: #f1f5f9;
+  --coin-color: #ffc93c;
+  --accent: #f43f5e;
+  --accent-light: #f77f94;
+  --accent-deep: #b72f47;
+  --accent-glow: rgb(244 63 94 / 0.55);
+  /* The bubbles, the tag and the total: a light from above. */
+  --fill: linear-gradient(
+    var(--accent-light),
+    var(--accent) 55%,
+    var(--accent-deep)
+  );
+  /* The tag's name strip and the hole its cord goes through. */
+  --panel: #18181b;
+
+  /* The design stage's size. Keep in sync with STAGE in jars/index.ts: main.ts sets its width to
+     the page's. It also sets where the jar sits on it (--jar-x, --jar-y, --jar-width,
+     --jar-height), where the tag hangs from (--tag-x, --tag-y) and the line the jar stands on
+     (--ground-y). Each bubble gets the point its tail touches the jar at (--tip-x, --tip-y). */
+  --stage-width: 1180px;
+  --stage-height: 700px;
+
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Streaming apps show the page over the video, so keep it transparent. It's never scrolled,
+   so no scrollbars when the browser source is smaller than the page. */
+body {
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* As wide as the page and scaled to fit it, at its bottom. */
+#stage {
+  --scale: 1;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: var(--stage-width);
+  height: var(--stage-height);
+  transform: translateX(-50%) scale(var(--scale));
+  transform-origin: 50% 100%;
+  color: var(--text-color);
+}
+
+/* Placed and sized by the jar: the gifts' canvas covers only the jar and the room above it, up to
+   the page's top. */
+#gifts,
+#spill {
+  position: absolute;
+}
+
+/* Each of the jar's layers gets a compositing layer of its own, so it's painted once and not
+   again while the gifts between the layers, or the bubbles and the total, change. */
+.jar {
+  position: absolute;
+  top: var(--jar-y);
+  left: var(--jar-x);
+  width: var(--jar-width);
+  height: var(--jar-height);
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.jar canvas,
+.jar svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.jar svg {
+  overflow: visible;
+}
+
+/* Sparkles in the empty jar, behind the gifts, twinkling. Each one is a layer of its own, so the
+   twinkle runs on the compositor and nothing is painted again. */
+.sparkle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.45), transparent 70%);
+  will-change: opacity, transform;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.sparkle.dot {
+  background: #fff;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.coin {
+  display: inline-flex;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  color: var(--coin-color);
+}
+
+.coin svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* A gifter's picture, in a circle. The placeholder stays under the picture. */
+.photo {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: 34px;
+  height: 34px;
+  overflow: hidden;
+  border: 2px solid var(--text-color);
+  border-radius: 50%;
+}
+
+.photo img,
+.photo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo img {
+  position: absolute;
+  inset: 0;
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bubble,
+.total {
+  background: var(--fill);
+  color: var(--text-color);
+  font-weight: 800;
+  /* A glow that follows the bubble's tail too. */
+  filter: drop-shadow(0 0 10px var(--accent-glow));
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+}
+
+/* Beside the jar, on one line, centered on where it touches the jar, with its tail pointing
+   there. Left of the jar it's right-aligned, so it grows to the left; right of it (.right) it's
+   mirrored. It never passes the page's edge: the name shortens instead. */
+.bubble {
+  position: absolute;
+  top: calc(var(--tip-y) - 22px);
+  right: calc(var(--stage-width) - var(--tip-x) + 11px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 44px;
+  max-width: calc(var(--tip-x) - 20px);
+  margin: 0;
+  padding: 5px 14px 5px 5px;
+  border-radius: 22px;
+  font-size: 18px;
+  line-height: 1;
+  white-space: nowrap;
+  transform-origin: 100% 50%;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
+}
+
+.bubble > * {
+  flex: none;
+}
+
+/* The tail, its tip 11px past the bubble, on the jar. Its sides are tangent to the bubble's
+   round end (22px radius, so 33px from the end's center to the tip), which makes the two one
+   smooth shape instead of a triangle stuck on a circle. It has the bubble's fill, shifted so the
+   two match where they join, and sits behind the picture. */
+.bubble::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: -11px;
+  width: 18.3px;
+  height: 32.8px;
+  margin-top: -16.4px;
+  background: var(--fill);
+  background-position: 0 -5.6px;
+  background-size: 100% 44px;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.bubble.right {
+  right: auto;
+  left: calc(var(--tip-x) + 11px);
+  max-width: calc(var(--stage-width) - var(--tip-x) - 20px);
+  transform-origin: 0 50%;
+}
+
+.bubble.right::after {
+  right: auto;
+  left: -11px;
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+
+.bubble.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.bubble .name {
+  flex: 0 1 auto;
+  max-width: 140px;
+}
+
+.bubble .gift {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.bubble .coins {
+  font-variant-numeric: tabular-nums;
+}
+
+.bubble .coin {
+  width: 20px;
+  height: 20px;
+}
+
+/* A gift tag on the bow, leaning away from the glass. main.ts swings it around the knot (the
+   middle of its top) when someone else takes the lead, and keeps its angle in TAG_REST. */
+.tag {
+  position: absolute;
+  top: var(--tag-y);
+  left: calc(var(--tag-x) - 54px);
+  width: 108px;
+  transform-origin: 50% 0;
+  transform: rotate(-6deg);
+  filter: drop-shadow(0 0 10px var(--accent-glow));
+}
+
+/* Two strands from the knot, in the ribbon's colors, meeting in the eyelet. */
+.cord {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 24px;
+  height: 40px;
+  margin: 0 auto;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.cord .shade {
+  stroke: var(--accent-deep);
+  stroke-width: 3.5;
+}
+
+.cord .light {
+  stroke: var(--accent-light);
+  stroke-width: 1.5;
+}
+
+/* The card's top corners are cut off, like a gift tag's, and every corner is rounded. Its face is
+   drawn behind it, so the crown can stand past its edge. The cord ends in the middle of the
+   eyelet. */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  width: 108px;
+  height: 150px;
+  margin-top: -16px;
+  padding-top: 30px;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  clip-path: path(
+    "M28 0H80Q86 0 90.2 4.2L103.8 17.8Q108 22 108 28V140Q108 150 98 150H10Q0 150 0 140V28Q0 22 4.2 17.8L17.8 4.2Q22 0 28 0Z"
+  );
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 0.38), transparent 45%),
+    var(--fill);
+}
+
+/* Steel, like the jar's band, round the hole the cord goes through. */
+.eyelet {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--panel) 0 3.5px, transparent 4px),
+    linear-gradient(135deg, #f8fafc, #c9cfd7 45%, #7a828d);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.45),
+    inset 0 -1px 1px rgb(0 0 0 / 0.25);
+}
+
+/* The photo in a paper mat, with the crown on its corner. */
+.frame {
+  position: relative;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--text-color);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 0.3);
+}
+
+/* A block, since the mat isn't a flex box: inline, it would take its picture's size. */
+.tag .photo {
+  display: block;
+  width: 76px;
+  height: 76px;
+  border: none;
+  border-radius: 9px;
+  /* The placeholder is a square; this fills the rest of the frame in its gray. */
+  background: #d4d4d4;
+}
+
+.crown {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 26px;
+  height: 20px;
+  color: var(--coin-color);
+  transform: rotate(16deg);
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.4));
+}
+
+.crown svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The name on a plate, centered in the room under the photo. */
+.tag .name {
+  position: relative;
+  max-width: 92px;
+  margin: auto 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 16px;
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+
+/* Under the jar, centered on it. */
+.total {
+  position: absolute;
+  top: calc(var(--ground-y) + 24px);
+  left: calc(var(--jar-x) + var(--jar-width) / 2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  height: 56px;
+  margin: 0;
+  padding: 8px 22px 8px 10px;
+  border-radius: 28px;
+  transform: translateX(-50%);
+  font-size: 30px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.total .coin {
+  width: 32px;
+  height: 32px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble {
+    transition: none;
+  }
+
+  .sparkle {
+    animation: none;
+  }
+}
