@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fan Level</title>
+    <!-- Tokio rewrites this block with the overlay's ID and saved settings. Keep it exactly
+         like this, before the scripts that read it, with the defaults from config.yaml. -->
+    <script id="tokio-setup">
+      window.__OVERLAY_ID__ = "";
+      window.__OVERLAY_CONFIG__ = {
+        min_level: 1,
+        superfans_only: false,
+        seconds: 5,
+        shown_name: "name",
+        label: "Fan level",
+        align: "left",
+        font: "",
+        size: 100,
+        entrance: "slide",
+        superfan_effect: "sweep",
+        banner_color: "#18181b",
+        name_color: "#f1f5f9",
+        level_color: "#f43f5e",
+        superfan_color: "#f43f5e",
+      };
+    </script>
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <!-- Tokio's fans take turns: their name, the text before the level, the level and TikTok's
+         badge for it. A Super Fan's banner has a sparkle before the name. -->
+    <div id="stage">
+      <div id="banner" class="banner" hidden>
+        <span class="glow" aria-hidden="true"></span>
+        <span id="spark" class="spark"></span>
+        <span class="text">
+          <span id="name" class="name"></span>
+          <span class="level">
+            <span id="label" class="label"></span>
+            <span id="level" class="number"></span>
+          </span>
+        </span>
+        <span id="badge" class="badge"></span>
+        <span class="sheen" aria-hidden="true"><span id="band"></span></span>
+        <span id="twinkles" class="twinkles" aria-hidden="true"></span>
+      </div>
+    </div>
+  </body>
+</html>

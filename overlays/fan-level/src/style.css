@@ -1,0 +1,233 @@
+:root {
+  /* Set from the overlay's settings by main.ts. */
+  --scale: 1;
+  --font: system-ui, sans-serif;
+  --font-heavy: "Segoe UI Black", system-ui, sans-serif;
+  --banner: #18181b;
+  --name: #f1f5f9;
+  --level: #f43f5e;
+  --super: #f43f5e;
+  --super-glow: rgba(244, 63, 94, 0.55);
+
+  font-family: var(--font);
+  /* Everything else is in rem or em, so the size setting scales it all. */
+  font-size: calc(24px * var(--scale));
+}
+
+/* Streaming apps show the page over the video, so keep it transparent. It's never scrolled,
+   so no scrollbars when the browser source is smaller than the page. */
+body {
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* The banner in the middle of the page's height, against the side the alignment picks, with room
+   around it for a Super Fan's glow. */
+#stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem;
+}
+
+#stage[data-align="center"] {
+  justify-content: center;
+}
+
+#stage[data-align="right"] {
+  justify-content: flex-end;
+}
+
+.banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem 0.75rem 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: var(--banner);
+  color: var(--name);
+  white-space: nowrap;
+  box-shadow: 0 0.15rem 0.6rem rgb(0 0 0 / 0.35);
+}
+
+/* A Super Fan's banner: a rim and a glow in the Super Fan color, and the sparkle before the name.
+   The rim is a shadow, so the banner keeps its size. */
+.banner.superfan {
+  padding-left: 0.6rem;
+  box-shadow:
+    inset 0 0 0 0.09rem var(--super),
+    0 0 0.9rem var(--super-glow),
+    0 0.15rem 0.6rem rgb(0 0 0 / 0.35);
+}
+
+.spark {
+  display: none;
+  flex: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  /* As far from the name as the name is from the text after it */
+  margin-right: 0.2rem;
+  color: var(--super);
+}
+
+.superfan .spark {
+  display: block;
+}
+
+.spark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The name, the text before the level and the level sit on one baseline, whatever their sizes and
+   fonts. Centered, the bigger level is in the middle and the name a little low, so the line moves
+   up half the difference: neither is more than a pixel off at 100%. */
+.text {
+  position: relative;
+  top: -0.045rem;
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+.level {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.72;
+}
+
+.number {
+  color: var(--level);
+  font-family: var(--font-heavy);
+  font-size: 1.2rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* TikTok draws the badge 57×42: a heart with a ring around it and no number. */
+.badge {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.85rem;
+  height: 1.35rem;
+}
+
+.badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.badge svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--level);
+}
+
+/* The light that sweeps once across a Super Fan's banner, clipped to its round ends. */
+.sheen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+#band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgb(255 255 255 / 0.3),
+    transparent
+  );
+  transform: translateX(-100%);
+}
+
+/* A wider glow around a Super Fan's rim, which breathes with the pulsing glow effect. */
+.glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  box-shadow: 0 0 1.4rem 0.2rem var(--super-glow);
+  pointer-events: none;
+}
+
+#stage[data-effect="pulse"] .superfan .glow {
+  animation: pulse 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.1;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* The sparkles that twinkle once around a Super Fan's banner, every other one in the text's
+   color. main.ts places them. */
+.twinkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.twinkle {
+  position: absolute;
+  color: var(--super);
+  opacity: 0;
+}
+
+.twinkle:nth-child(even) {
+  color: var(--name);
+}
+
+.twinkle svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow {
+    animation: none !important;
+  }
+}

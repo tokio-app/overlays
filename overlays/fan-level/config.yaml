@@ -1,0 +1,157 @@
+# The settings streamers see in Tokio's gallery. Each field's id is a key of
+# window.__OVERLAY_CONFIG__. Keep the defaults in index.html's setup block in sync.
+# Field and option ids are kept across updates, so don't rename them.
+sections:
+  - name: Fans
+    id: fans
+  - name: Look
+    id: look
+  - name: Animations
+    id: animations
+  - name: Colors
+    id: colors
+fields:
+  - name: Lowest fan level that shows
+    id: min_level
+    type: slider
+    section: fans
+    attributes:
+      min: 1
+      max: 50
+      value: 1
+      default: 1
+  - name: Super Fans only
+    id: superfans_only
+    type: toggle
+    section: fans
+    attributes:
+      value: false
+      default: false
+  - name: Seconds each fan stays
+    id: seconds
+    type: slider
+    section: fans
+    attributes:
+      min: 2
+      max: 15
+      value: 5
+      default: 5
+  - name: Name on the banner
+    id: shown_name
+    type: dropdown
+    section: look
+    attributes:
+      multiple: false
+      value: name
+      default: name
+      options:
+        - value: name
+          label: Name
+        - value: handle
+          label: "@handle"
+  - name: Text before the level
+    id: label
+    type: input
+    section: look
+    attributes:
+      mode: text
+      placeholder: Fan level
+      value: Fan level
+      default: Fan level
+  - name: Alignment
+    id: align
+    type: dropdown
+    section: look
+    attributes:
+      multiple: false
+      value: left
+      default: left
+      options:
+        - value: left
+          label: Left
+        - value: center
+          label: Center
+        - value: right
+          label: Right
+  - name: Font
+    id: font
+    type: font
+    section: look
+    attributes:
+      value: ""
+      default: ""
+  - name: Size (%)
+    id: size
+    type: slider
+    section: look
+    attributes:
+      min: 50
+      max: 200
+      value: 100
+      default: 100
+  - name: How a fan comes in
+    id: entrance
+    type: dropdown
+    section: animations
+    attributes:
+      multiple: false
+      value: slide
+      default: slide
+      options:
+        - value: slide
+          label: Slide
+        - value: fade
+          label: Fade
+        - value: pop
+          label: Pop
+        - value: drop
+          label: Drop
+        - value: flip
+          label: Flip
+        - value: wipe
+          label: Wipe
+  - name: Super Fan effect
+    id: superfan_effect
+    type: dropdown
+    section: animations
+    attributes:
+      multiple: false
+      value: sweep
+      default: sweep
+      options:
+        - value: sweep
+          label: Light sweep
+        - value: pulse
+          label: Pulsing glow
+        - value: sparkles
+          label: Sparkles
+        - value: none
+          label: None
+  - name: Banner
+    id: banner_color
+    type: color
+    section: colors
+    attributes:
+      value: "18181b"
+      default: "18181b"
+  - name: Text
+    id: name_color
+    type: color
+    section: colors
+    attributes:
+      value: f1f5f9
+      default: f1f5f9
+  - name: Level
+    id: level_color
+    type: color
+    section: colors
+    attributes:
+      value: f43f5e
+      default: f43f5e
+  - name: Super Fan
+    id: superfan_color
+    type: color
+    section: colors
+    attributes:
+      value: f43f5e
+      default: f43f5e

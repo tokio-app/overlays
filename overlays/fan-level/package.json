@@ -1,0 +1,20 @@
+{
+  "name": "@tokio-overlays/fan-level",
+  "version": "1.0.0",
+  "description": "Your fans take turns on a banner with their fan level and badge, and Super Fans get a glowing rim and a sparkle.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@tokioapp/overlay": "^1.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

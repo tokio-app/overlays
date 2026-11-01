@@ -411,6 +411,11 @@
   resolved "https://registry.yarnpkg.com/@tokioapp/overlay/-/overlay-1.1.0.tgz#7bd4838fb2c23a129b23c7b22961eadf25f47fd0"
   integrity sha512-b/oXQzo5EFswvBm2zaS03vASRX+5I2PVddIjy2FyB6NJ9mqodJJRpg7KOrHaBT56VAoHS3XErRdMvE/J96N2Fw==
 
+"@tokioapp/overlay@^1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@tokioapp/overlay/-/overlay-1.4.0.tgz#aad9ba58341aaea7ea01a4a1e7d89b7f55e4fb46"
+  integrity sha512-unidjTrIRdSWzKwZ57xLl9COUdEGkqAavK3IlPCK+qPmZzR1dCaLb74DWUwXbJyFJ2yBLYCIvDuK+E6UzNHNVg==
+
 "@types/matter-js@^0.20.2":
   version "0.20.2"
   resolved "https://registry.yarnpkg.com/@types/matter-js/-/matter-js-0.20.2.tgz#f24c6e9ffd779426336d3c966f7bd2e69dceee08"
