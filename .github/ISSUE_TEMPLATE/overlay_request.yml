@@ -32,6 +32,7 @@ body:
         - Member Join (tokio:event:memberjoin)
         - Viewers (tokio:event:roomuser)
         - Music Change (tokio:event:music:change)
+        - Fans seen in earlier LIVEs (tokio:fans)
     validations:
       required: true
   - type: textarea
