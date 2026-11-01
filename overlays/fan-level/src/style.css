@@ -133,10 +133,13 @@ body {
   line-height: 1;
 }
 
-/* TikTok draws the badge 57×42: a heart with a ring around it and no number. */
+/* TikTok draws the badge 57×42, a heart in a ring, or 42×42, the heart alone, with no number. The
+   slot fits the wider one. Its one track is the slot's size, so a square picture stays inside it:
+   an auto row grew to the picture's height at the slot's width, and the heart hung low. */
 .badge {
   display: grid;
   flex: none;
+  grid-template: 100% / 100%;
   place-items: center;
   width: 1.85rem;
   height: 1.35rem;
