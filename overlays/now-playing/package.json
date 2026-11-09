@@ -1,0 +1,20 @@
+{
+  "name": "@tokio-overlays/now-playing",
+  "version": "1.0.0",
+  "description": "The song playing from your music requests, its cover turning like a record, with the next songs in the queue.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@tokioapp/overlay": "^1.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

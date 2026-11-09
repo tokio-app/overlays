@@ -1,0 +1,691 @@
+:root {
+  /* Set from the overlay's settings by main.ts. */
+  --scale: 1;
+  --font: system-ui, sans-serif;
+  --card: #18181b;
+  --text: #f1f5f9;
+  --accent: #f43f5e;
+
+  font-family: var(--font);
+  /* Everything else is in rem or em, so the size setting scales it all. */
+  font-size: calc(24px * var(--scale));
+}
+
+/* Streaming apps show the page over the video, so keep it transparent. It's never scrolled,
+   so no scrollbars when the browser source is smaller than the page. */
+body {
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* The card in the middle of the page's height and Up next hanging under it, so the queue never
+   moves the card. Each is as wide as what it shows, up to the column's limit, and the alignment
+   puts both on the left, in the middle or on the right. */
+#stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  box-sizing: border-box;
+  grid-template-columns: fit-content(min(20.6rem, 100%));
+  grid-template-rows: 1fr auto 1fr;
+  row-gap: 0.4rem;
+  justify-content: start;
+  justify-items: start;
+  padding: 1rem;
+  color: var(--text);
+}
+
+#stage[data-align="center"] {
+  justify-content: center;
+  justify-items: center;
+}
+
+#stage[data-align="right"] {
+  justify-content: end;
+  justify-items: end;
+}
+
+.card {
+  display: flex;
+  grid-row: 2;
+  align-items: center;
+  gap: 0.65rem;
+  box-sizing: border-box;
+  /* No wider than the column, where a long title scrolls, and a set minimum, as the title's own
+     width would push the column past its limit. */
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.45rem 0.9rem 0.45rem 0.45rem;
+  border-radius: 999px;
+  background: var(--card);
+  white-space: nowrap;
+  box-shadow: 0 0.15rem 0.6rem rgb(0 0 0 / 0.35);
+}
+
+/* The cover cut round, with a ring in the accent color around it and a gap of the card's color
+   between. The hole in the middle is what shows it turning. */
+.disc {
+  position: relative;
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 0.13rem var(--card),
+    0 0 0 0.21rem var(--accent);
+}
+
+/* With the third line the card is taller, and the disc grows to fill its round end again. */
+.card[data-up] .disc {
+  width: 3.15rem;
+  height: 3.15rem;
+}
+
+.disc::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.46rem;
+  height: 0.46rem;
+  margin: -0.23rem 0 0 -0.23rem;
+  border-radius: 50%;
+  background: var(--card);
+}
+
+/* One turn in 8 seconds. The song change's half turn is on .flip, so the two add up. */
+.turn,
+.flip,
+.layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.turn {
+  animation: turn 8s linear infinite;
+}
+
+#stage[data-spin="off"] .turn {
+  animation-play-state: paused;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.layer {
+  overflow: hidden;
+}
+
+.layer img,
+.record,
+.record svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.layer img {
+  object-fit: cover;
+}
+
+.record {
+  color: var(--accent);
+}
+
+.text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Each line clips its slots as they slide up, but not sideways, where a scrolling text fades out.
+   A browser without overflow: clip keeps hidden, and hard edges. */
+.line {
+  position: relative;
+  overflow: hidden;
+  overflow: visible clip;
+  line-height: 1.3;
+}
+
+.song {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.artist {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.72;
+}
+
+/* A text too wide for the card scrolls (line.ts), or ends in an ellipsis with less motion, below.
+   Otherwise it's clipped: a text less than a pixel too wide doesn't scroll, and an ellipsis would
+   cut its last letters. The slot reaches a little past the line on both sides, into the gap after
+   the disc and the card's padding, so a scrolling text fades out there instead of being cut
+   mid-letter. At rest it sits clear of the fades. */
+.slot {
+  display: block;
+  overflow: hidden;
+  margin: 0 -0.45rem;
+  padding: 0 0.45rem;
+  white-space: nowrap;
+}
+
+.slot.out {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.slot[data-scroll],
+.next-list[data-scroll] {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 0.45rem,
+    #000 calc(100% - 0.45rem),
+    transparent
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 0.45rem,
+    #000 calc(100% - 0.45rem),
+    transparent
+  );
+}
+
+.slot[data-scroll] .run {
+  display: inline-block;
+}
+
+/* Inside the card: the next song on a third line, after the text before it. */
+.up {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+  min-width: 0;
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
+.up-label {
+  flex: none;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.up-song {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  opacity: 0.72;
+}
+
+/* Up next: its own panel under the card, so it reads over any video. The label sits under the
+   disc and the songs line up with the card's text. */
+.next {
+  display: grid;
+  grid-row: 3;
+  grid-template-columns: minmax(2.6rem, auto) minmax(0, 1fr);
+  column-gap: 0.65rem;
+  align-items: baseline;
+  align-self: start;
+  box-sizing: border-box;
+  /* Its songs' widths widen the column only up to its limit. */
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.5rem 0.9rem 0.5rem 0.45rem;
+  border-radius: 1.1rem;
+  background: var(--card);
+  box-shadow: 0 0.15rem 0.6rem rgb(0 0 0 / 0.35);
+}
+
+.next-label {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.04rem;
+  white-space: nowrap;
+}
+
+.next-list {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.next-list li {
+  overflow: hidden;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.04rem;
+  opacity: 0.72;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.by {
+  margin-left: 0.45em;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+/* A queued song's cover as a small disc. */
+.mini {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  overflow: hidden;
+  border-radius: 50%;
+  color: var(--accent);
+  vertical-align: middle;
+}
+
+.mini img,
+.mini svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* List with covers: each song's cover before its name, on rows a little taller. */
+.next[data-style="covers"] li {
+  line-height: 1.4rem;
+}
+
+.next[data-style="covers"] .mini {
+  margin: -0.12rem 0.45em 0 0;
+}
+
+/* Covers only: the next songs' covers, a small stack of records under the card. */
+.next[data-style="discs"] {
+  display: flex;
+  padding: 0.3rem;
+  border-radius: 999px;
+}
+
+/* They follow the song playing's cover, at the card's left end, whatever the alignment: centered
+   under the card they looked lost. A big cover and text alone keep them with their text. */
+#stage[data-layout="pill"] .next[data-style="discs"],
+#stage[data-layout="sleeve"] .next[data-style="discs"],
+#stage[data-layout="bar"] .next[data-style="discs"] {
+  justify-self: start;
+}
+
+.next[data-style="discs"] .next-label {
+  display: none;
+}
+
+.next[data-style="discs"] .next-list {
+  display: flex;
+}
+
+.next[data-style="discs"] li {
+  position: relative;
+  overflow: visible;
+  line-height: 0;
+  opacity: 1;
+}
+
+/* Each overlaps the one before a little, with a ring of the card's color between them. */
+.next[data-style="discs"] li + li {
+  margin-left: -0.35rem;
+}
+
+.next[data-style="discs"] .mini {
+  width: 1.6rem;
+  height: 1.6rem;
+  box-shadow: 0 0 0 0.12rem var(--card);
+}
+
+/* Ticker: one line, the text before it and then the songs, which slide sideways when they don't
+   fit. Like a card's line, it reaches past its room on both sides, where the slide fades out. */
+.next[data-style="ticker"] {
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  border-radius: 999px;
+}
+
+.next[data-style="ticker"] .next-list {
+  overflow: hidden;
+  margin: 0 -0.45rem;
+  padding: 0 0.45rem;
+  line-height: 1.04rem;
+  white-space: nowrap;
+}
+
+/* The line clips the songs, not the run: an inline block that hides its overflow sits on its
+   bottom edge instead of its text's baseline, which put the songs 5.5px above the label. */
+.next[data-style="ticker"] .run {
+  display: inline;
+  overflow: visible;
+}
+
+.next[data-style="ticker"] .next-list[data-scroll] .run {
+  display: inline-block;
+}
+
+.item + .item {
+  margin-left: 1.4em;
+}
+
+/* Layouts. Everything above is the pill with a disc; the others change it here. */
+
+/* The record sleeve's record shows only in that layout. */
+.vinyl {
+  display: none;
+}
+
+/* Covers that don't turn: the sleeve, the big cover, and text alone, where it's hidden. The
+   pill's half turns are dropped too, so a cover is never left upside down. */
+#stage[data-layout="sleeve"] .turn,
+#stage[data-layout="big"] .turn {
+  animation: none;
+}
+
+#stage[data-layout="sleeve"] .flip,
+#stage[data-layout="big"] .flip,
+#stage[data-layout="text"] .flip {
+  transform: none !important;
+}
+
+#stage[data-layout="sleeve"] .disc::after,
+#stage[data-layout="big"] .disc::after {
+  display: none;
+}
+
+/* Record sleeve: the square cover as the sleeve, still, with its record half out of it on the
+   right, turning. */
+#stage[data-layout="sleeve"] .card {
+  border-radius: 0.9rem;
+}
+
+#stage[data-layout="sleeve"] .disc {
+  width: 4.3rem;
+  height: 3rem;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+#stage[data-layout="sleeve"] .turn {
+  right: auto;
+  width: 3rem;
+  border-radius: 0.2rem;
+  box-shadow: 0.12rem 0 0.4rem rgb(0 0 0 / 0.5);
+}
+
+#stage[data-layout="sleeve"] .flip,
+#stage[data-layout="sleeve"] .layer {
+  border-radius: 0.2rem;
+}
+
+/* With no cover, the sleeve is plain, a shade off the card, with the ring of its hole. */
+#stage[data-layout="sleeve"] .layer .record {
+  position: relative;
+  /* Opaque, so the record behind doesn't show through. */
+  background:
+    linear-gradient(rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.07)),
+    var(--card);
+}
+
+#stage[data-layout="sleeve"] .layer .record svg {
+  display: none;
+}
+
+#stage[data-layout="sleeve"] .layer .record::after {
+  content: "";
+  position: absolute;
+  inset: 24%;
+  border: 0.08rem solid rgb(255 255 255 / 0.14);
+  border-radius: 50%;
+}
+
+#stage[data-layout="sleeve"] .vinyl {
+  display: block;
+  position: absolute;
+  top: 0.1rem;
+  left: 1.5rem;
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 50%;
+  /* A faint rim, so the black record shows on the dark card. */
+  box-shadow: 0 0 0 0.06rem rgb(255 255 255 / 0.14);
+}
+
+.vinyl-spin {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: var(--accent);
+  animation: turn 8s linear infinite;
+}
+
+.vinyl-spin svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#stage[data-spin="off"] .vinyl-spin {
+  animation-play-state: paused;
+}
+
+/* Big cover: the cover large and still, ringed like the pill's disc, with the song and artist
+   centered under it. The column is the card's width, and Up next's label sits over its songs. */
+/* A 7rem cover: with two songs up next it fits the height of Tokio's previews at 100%. */
+#stage[data-layout="big"] {
+  grid-template-columns: min(8.2rem, 100%);
+}
+
+/* Both fill the column, whatever the alignment. */
+#stage[data-layout="big"] .card,
+#stage[data-layout="big"] .next:not([data-style="discs"]) {
+  justify-self: stretch;
+}
+
+#stage[data-layout="big"] .card {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+  padding: 0.6rem 0.6rem 0.55rem;
+  border-radius: 1.1rem;
+  text-align: center;
+}
+
+#stage[data-layout="big"] .disc {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 0.55rem;
+}
+
+#stage[data-layout="big"] .turn,
+#stage[data-layout="big"] .flip,
+#stage[data-layout="big"] .layer {
+  border-radius: 0.55rem;
+}
+
+#stage[data-layout="big"] .up {
+  justify-content: center;
+}
+
+/* The text before the next song and the song stay together where the line is centered. */
+#stage[data-layout="big"] .up-song,
+#stage[data-layout="text"] .up-song {
+  flex: 0 1 auto;
+}
+
+/* The column is narrow, so Up next lists the songs without their artists. */
+#stage[data-layout="big"] .next:not([data-style="ticker"]) .by {
+  display: none;
+}
+
+#stage[data-layout="big"] .next,
+#stage[data-layout="text"] .next {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 0.1rem;
+}
+
+#stage[data-layout="big"] .next:not([data-style="discs"]) {
+  padding: 0.5rem 0.6rem;
+  text-align: center;
+}
+
+#stage[data-layout="big"] .next[data-style="discs"] {
+  justify-self: center;
+}
+
+/* Centered lists with covers center their rows as a block, so the covers line up. */
+#stage[data-layout="big"] .next[data-style="covers"] .next-list,
+#stage[data-layout="text"][data-align="center"]
+  .next[data-style="covers"]
+  .next-list {
+  justify-self: center;
+  text-align: left;
+}
+
+#stage[data-layout="text"][data-align="right"]
+  .next[data-style="covers"]
+  .next-list {
+  justify-self: end;
+  text-align: left;
+}
+
+/* Slim bar: one short line, a small disc and then the song and artist side by side. */
+#stage[data-layout="bar"] .card {
+  gap: 0.5rem;
+  padding: 0.28rem 0.85rem 0.28rem 0.28rem;
+}
+
+#stage[data-layout="bar"] .disc {
+  width: 1.55rem;
+  height: 1.55rem;
+  box-shadow:
+    0 0 0 0.08rem var(--card),
+    0 0 0 0.14rem var(--accent);
+}
+
+#stage[data-layout="bar"] .disc::after {
+  width: 0.3rem;
+  height: 0.3rem;
+  margin: -0.15rem 0 0 -0.15rem;
+}
+
+#stage[data-layout="bar"] .text {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.5em;
+}
+
+#stage[data-layout="bar"] .line {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+#stage[data-layout="bar"] .song {
+  font-size: 0.85rem;
+}
+
+#stage[data-layout="bar"] .artist {
+  font-size: 0.75rem;
+}
+
+#stage[data-layout="bar"] .up {
+  flex: 0 1 auto;
+  margin-left: 0.5em;
+}
+
+/* On its one line, the next song takes the artist's place. */
+#stage[data-layout="bar"] .card[data-up] .artist {
+  display: none;
+}
+
+/* Text only: no card and no cover, the text outlined in the card's color so it reads over any
+   video. Up next drops its panels the same way, its label over its songs. Shadows rather than a
+   stroke, which older OBS browsers can't paint under the fill. */
+#stage[data-layout="text"] .card,
+#stage[data-layout="text"] .next {
+  background: none;
+  box-shadow: none;
+  text-shadow:
+    0.06em 0 0 var(--card),
+    -0.06em 0 0 var(--card),
+    0 0.06em 0 var(--card),
+    0 -0.06em 0 var(--card),
+    0.045em 0.045em 0 var(--card),
+    -0.045em 0.045em 0 var(--card),
+    0.045em -0.045em 0 var(--card),
+    -0.045em -0.045em 0 var(--card),
+    0 0.1em 0.3em rgb(0 0 0 / 0.5);
+}
+
+#stage[data-layout="text"] .card {
+  padding: 0;
+}
+
+#stage[data-layout="text"] .disc {
+  display: none;
+}
+
+#stage[data-layout="text"] .next:not([data-style="discs"]) {
+  padding: 0;
+}
+
+/* Dimmer text would dim its outline too, so it stays nearly opaque here. */
+#stage[data-layout="text"] .artist,
+#stage[data-layout="text"] .up-song {
+  opacity: 0.9;
+}
+
+#stage[data-layout="text"] .next-list li {
+  opacity: 1;
+}
+
+#stage[data-layout="text"] .by {
+  opacity: 0.8;
+}
+
+#stage[data-layout="text"][data-align="center"] .card,
+#stage[data-layout="text"][data-align="center"] .next {
+  text-align: center;
+}
+
+#stage[data-layout="text"][data-align="right"] .card,
+#stage[data-layout="text"][data-align="right"] .next {
+  text-align: right;
+}
+
+#stage[data-layout="text"][data-align="center"] .up {
+  justify-content: center;
+}
+
+#stage[data-layout="text"][data-align="right"] .up {
+  justify-content: flex-end;
+}
+
+/* Less motion: the discs stay still, and long texts end in an ellipsis. */
+@media (prefers-reduced-motion: reduce) {
+  .turn,
+  .vinyl-spin {
+    animation-play-state: paused;
+  }
+
+  .slot,
+  .next[data-style="ticker"] .next-list {
+    text-overflow: ellipsis;
+  }
+}

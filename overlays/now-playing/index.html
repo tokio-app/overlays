@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Now Playing</title>
+    <!-- Tokio rewrites this block with the overlay's ID and saved settings. Keep it exactly
+         like this, before the scripts that read it, with the defaults from config.yaml. -->
+    <script id="tokio-setup">
+      window.__OVERLAY_ID__ = "";
+      window.__OVERLAY_CONFIG__ = {
+        next_count: 2,
+        next_style: "list",
+        next_label: "Up next",
+        layout: "pill",
+        align: "left",
+        font: "",
+        size: 100,
+        entrance: "slide",
+        spin: true,
+        card_color: "#18181b",
+        text_color: "#f1f5f9",
+        accent_color: "#f43f5e",
+      };
+    </script>
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <!-- The song playing, in the layout the settings pick (a pill with the cover cut round like
+         a record by default), and the songs waiting under it, or the next one on the card's third
+         line. The two cover layers cross-fade on a song change. The vinyl is the record sleeve's
+         record, behind the cover. -->
+    <div id="stage">
+      <div id="card" class="card" hidden>
+        <span class="disc">
+          <span id="vinyl" class="vinyl"
+            ><span id="vinyl-spin" class="vinyl-spin"></span
+          ></span>
+          <span class="turn">
+            <span id="flip" class="flip">
+              <span id="cover-a" class="layer"></span>
+              <span id="cover-b" class="layer"></span>
+            </span>
+          </span>
+        </span>
+        <span id="text" class="text">
+          <span id="song" class="line song"></span>
+          <span id="artist" class="line artist" hidden></span>
+          <span id="up" class="up" hidden>
+            <span id="up-label" class="up-label"></span>
+            <span id="up-song" class="line up-song"></span>
+          </span>
+        </span>
+      </div>
+      <div id="next" class="next" hidden>
+        <span id="next-label" class="next-label"></span>
+        <ul id="next-list" class="next-list"></ul>
+      </div>
+    </div>
+  </body>
+</html>

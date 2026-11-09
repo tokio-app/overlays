@@ -1,0 +1,149 @@
+# The settings streamers see in Tokio's gallery. Each field's id is a key of
+# window.__OVERLAY_CONFIG__. Keep the defaults in index.html's setup block in sync.
+# Field and option ids are kept across updates, so don't rename them.
+sections:
+  - name: Songs
+    id: songs
+  - name: Look
+    id: look
+  - name: Animations
+    id: animations
+  - name: Colors
+    id: colors
+fields:
+  - name: Songs up next
+    id: next_count
+    type: slider
+    section: songs
+    attributes:
+      min: 0
+      max: 5
+      value: 2
+      default: 2
+  - name: How Up next looks
+    id: next_style
+    type: dropdown
+    section: songs
+    attributes:
+      multiple: false
+      value: list
+      default: list
+      options:
+        - value: list
+          label: List
+        - value: covers
+          label: List with covers
+        - value: discs
+          label: Covers only
+        - value: ticker
+          label: Ticker
+        - value: inside
+          label: Inside the card
+  - name: Text before the next songs
+    id: next_label
+    type: input
+    section: songs
+    attributes:
+      mode: text
+      placeholder: Up next
+      value: Up next
+      default: Up next
+  - name: Layout
+    id: layout
+    type: dropdown
+    section: look
+    attributes:
+      multiple: false
+      value: pill
+      default: pill
+      options:
+        - value: pill
+          label: Pill with a disc
+        - value: sleeve
+          label: Record sleeve
+        - value: big
+          label: Big cover
+        - value: bar
+          label: Slim bar
+        - value: text
+          label: Text only
+  - name: Alignment
+    id: align
+    type: dropdown
+    section: look
+    attributes:
+      multiple: false
+      value: left
+      default: left
+      options:
+        - value: left
+          label: Left
+        - value: center
+          label: Center
+        - value: right
+          label: Right
+  - name: Font
+    id: font
+    type: font
+    section: look
+    attributes:
+      value: ""
+      default: ""
+  - name: Size (%)
+    id: size
+    type: slider
+    section: look
+    attributes:
+      min: 50
+      max: 200
+      value: 100
+      default: 100
+  - name: How the card comes in
+    id: entrance
+    type: dropdown
+    section: animations
+    attributes:
+      multiple: false
+      value: slide
+      default: slide
+      options:
+        - value: slide
+          label: Slide
+        - value: fade
+          label: Fade
+        - value: pop
+          label: Pop
+        - value: drop
+          label: Drop
+        - value: flip
+          label: Flip
+        - value: wipe
+          label: Wipe
+  - name: Turn the cover while a song plays
+    id: spin
+    type: toggle
+    section: animations
+    attributes:
+      value: true
+      default: true
+  - name: Card
+    id: card_color
+    type: color
+    section: colors
+    attributes:
+      value: "18181b"
+      default: "18181b"
+  - name: Text
+    id: text_color
+    type: color
+    section: colors
+    attributes:
+      value: f1f5f9
+      default: f1f5f9
+  - name: Accent
+    id: accent_color
+    type: color
+    section: colors
+    attributes:
+      value: f43f5e
+      default: f43f5e
