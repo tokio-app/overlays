@@ -20,7 +20,7 @@ yarn release:build      # build everything and prepare release/ (see Releases)
 yarn release:notes      # print the next release's notes
 ```
 
-Verify changes with `yarn format:check`, `yarn lint`, `yarn typecheck` and `yarn release:build`. To test an overlay in Tokio, import its `dist/` in **Settings → Overlay Library**, or connect `yarn dev` with a test ID from **Tools → Test Overlays** (`?id=<test ID>`).
+Verify changes with `yarn format:check`, `yarn lint`, `yarn typecheck` and `yarn release:build`. To test an overlay in Tokio, import its `dist/` with **Overlays → Import overlay**, or connect `yarn dev` with a test ID from **Tools → Test Overlays** (`?id=<test ID>`).
 
 ## Agent models
 
