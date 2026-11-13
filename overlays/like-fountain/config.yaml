@@ -3,13 +3,16 @@
 sections:
   - name: Hearts
     id: hearts
+    translations: { es: Corazones }
   - name: Colors
     id: colors
+    translations: { es: Colores }
 fields:
   - name: Where the hearts rise from
     id: origin
     type: dropdown
     section: hearts
+    translations: { es: De dónde suben los corazones }
     attributes:
       multiple: false
       searchable: false
@@ -18,18 +21,24 @@ fields:
       options:
         - value: right
           label: Right
+          translations: { es: Derecha }
         - value: left
           label: Left
+          translations: { es: Izquierda }
         - value: middle
           label: Middle
+          translations: { es: Centro }
         - value: sides
           label: Right and left
+          translations: { es: Derecha e izquierda }
         - value: all
           label: All along the bottom
+          translations: { es: Todo el borde inferior }
   - name: Heart size
     id: heart_size
     type: slider
     section: hearts
+    translations: { es: Tamaño de los corazones }
     attributes:
       min: 20
       max: 120
@@ -39,6 +48,7 @@ fields:
     id: show_pictures
     type: toggle
     section: hearts
+    translations: { es: Mostrar la foto de perfil del espectador }
     attributes:
       value: true
       default: true
@@ -46,6 +56,7 @@ fields:
     id: heart_color
     type: color
     section: colors
+    translations: { es: Color de los corazones }
     attributes:
       value: ff1f2f
       default: ff1f2f
@@ -53,6 +64,7 @@ fields:
     id: second_color
     type: color
     section: colors
+    translations: { es: Segundo color de los corazones }
     # Quoted, since YAML reads 22e632 as a number.
     attributes:
       value: "22e632"

@@ -1,6 +1,6 @@
 {
   "name": "@tokio-overlays/like-fountain",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Hearts rise from the bottom of the screen for every like, with the viewer's profile picture.",
   "private": true,
   "type": "module",
