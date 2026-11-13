@@ -4,23 +4,29 @@
 sections:
   - name: Accounts
     id: accounts
+    translations: { es: Cuentas }
   - name: Timing
     id: timing
+    translations: { es: Tiempos }
   - name: Card
     id: card
+    translations: { es: Tarjeta }
   - name: Colors
     id: colors
+    translations: { es: Colores }
 fields:
   - name: Shown in this order
     id: accounts
     type: table
     section: accounts
+    translations: { es: Se muestran en este orden }
     attributes:
       max: 10
       columns:
         - name: Platform
           id: platform
           type: dropdown
+          translations: { es: Plataforma }
           attributes:
             multiple: false
             searchable: true
@@ -78,21 +84,26 @@ fields:
                 label: GitHub
               - value: website
                 label: Website
+                translations: { es: Sitio web }
         - name: Username
           id: username
           type: input
+          translations: { es: Usuario }
           attributes:
             mode: text
             placeholder: "@yourname"
+            translations: { es: "@tunombre" }
             default: ""
         - name: Icon color
           id: icon_color
           type: color
+          translations: { es: Color del ícono }
           attributes:
             default: "f1f5f9"
         - name: Icon background
           id: icon_background
           type: color
+          translations: { es: Fondo del ícono }
           attributes:
             default: "f43f5e"
       value:
@@ -125,6 +136,7 @@ fields:
     id: layout
     type: dropdown
     section: accounts
+    translations: { es: Diseño }
     attributes:
       multiple: false
       value: one
@@ -132,12 +144,15 @@ fields:
       options:
         - value: one
           label: One at a time
+          translations: { es: Uno a la vez }
         - value: all
           label: All at once
+          translations: { es: Todos a la vez }
   - name: Seconds per account
     id: account_seconds
     type: slider
     section: accounts
+    translations: { es: Segundos por cuenta }
     attributes:
       min: 3
       max: 30
@@ -147,6 +162,7 @@ fields:
     id: visibility
     type: dropdown
     section: timing
+    translations: { es: Cuándo aparece }
     attributes:
       multiple: false
       value: always
@@ -154,14 +170,19 @@ fields:
       options:
         - value: always
           label: All the time
+          translations: { es: Todo el tiempo }
         - value: interval
           label: Every few minutes
+          translations: { es: Cada cierto tiempo }
         - value: command
           label: Only on the chat command
+          translations: { es: Solo con el comando de chat }
   - name: Minutes hidden between rounds
     id: hidden_minutes
     type: slider
     section: timing
+    when: { visibility: interval }
+    translations: { es: Minutos sin mostrarse entre rondas }
     attributes:
       min: 1
       max: 30
@@ -171,6 +192,8 @@ fields:
     id: command
     type: input
     section: timing
+    when: { visibility: [interval, command] }
+    translations: { es: Comando de chat (vacío lo desactiva) }
     attributes:
       mode: text
       placeholder: "!socials"
@@ -180,6 +203,7 @@ fields:
     id: text
     type: dropdown
     section: card
+    translations: { es: Nombre que se muestra }
     attributes:
       multiple: false
       value: username
@@ -187,14 +211,18 @@ fields:
       options:
         - value: username
           label: Username
+          translations: { es: Usuario }
         - value: platform
           label: Platform name
+          translations: { es: Nombre de la plataforma }
         - value: both
           label: Both
+          translations: { es: Ambos }
   - name: Follow button
     id: show_button
     type: toggle
     section: card
+    translations: { es: Botón de seguir }
     attributes:
       value: true
       default: true
@@ -202,15 +230,19 @@ fields:
     id: button_text
     type: input
     section: card
+    when: { show_button: true }
+    translations: { es: Texto del botón (vacío deja solo el corazón) }
     attributes:
       mode: text
       placeholder: Follow
+      translations: { es: Seguir }
       value: Follow
       default: Follow
   - name: Font
     id: font
     type: font
     section: card
+    translations: { es: Fuente }
     attributes:
       value: ""
       default: ""
@@ -218,6 +250,7 @@ fields:
     id: size
     type: slider
     section: card
+    translations: { es: Tamaño (%) }
     attributes:
       min: 50
       max: 200
@@ -227,6 +260,7 @@ fields:
     id: roundness
     type: slider
     section: card
+    translations: { es: Radio de las esquinas }
     attributes:
       min: 0
       max: 24
@@ -236,6 +270,7 @@ fields:
     id: align
     type: dropdown
     section: card
+    translations: { es: Alineación }
     attributes:
       multiple: false
       value: left
@@ -243,14 +278,18 @@ fields:
       options:
         - value: left
           label: Left
+          translations: { es: Izquierda }
         - value: center
           label: Center
+          translations: { es: Centro }
         - value: right
           label: Right
+          translations: { es: Derecha }
   - name: Transition
     id: transition
     type: dropdown
     section: card
+    translations: { es: Transición }
     attributes:
       multiple: false
       value: flip
@@ -258,14 +297,18 @@ fields:
       options:
         - value: flip
           label: Flip
+          translations: { es: Volteo }
         - value: slide
           label: Slide
+          translations: { es: Deslizar }
         - value: fade
           label: Fade
+          translations: { es: Fundido }
   - name: Card
     id: card_color
     type: color
     section: colors
+    translations: { es: Tarjeta }
     attributes:
       value: "18181b"
       default: "18181b"
@@ -273,6 +316,7 @@ fields:
     id: text_color
     type: color
     section: colors
+    translations: { es: Texto }
     attributes:
       value: "f1f5f9"
       default: "f1f5f9"
