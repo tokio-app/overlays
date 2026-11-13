@@ -1,0 +1,16 @@
+{
+  "name": "@tokio-overlays/shared",
+  "version": "0.0.0",
+  "description": "Code the overlays share. Each overlay's build bundles what it imports.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "@tokioapp/overlay": "^1.1.0",
+    "matter-js": "^0.20.0"
+  },
+  "devDependencies": {
+    "@types/matter-js": "^0.20.2",
+    "vite": "^8.3.4"
+  }
+}
