@@ -16,15 +16,33 @@ export const OverlayMetaSchema = z.object({
   config: z.boolean(),
 });
 
+// The text beside it in other languages, by language code
+const Translations = z.record(z.string(), z.string()).optional();
+
 const SectionSchema = z.object({
   name: z.string(),
   id: z.string(),
+  translations: Translations,
 });
+
+// The values a condition names: one, or a list of which any matches
+const Values = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.array(z.union([z.string(), z.number(), z.boolean()])).min(1),
+]);
+
+// Shows a field only while each named earlier field has one of the values,
+// or with `not`, none of them
+const When = z.record(z.string(), z.union([Values, z.object({ not: Values })]));
 
 const BaseSetting = {
   name: z.string(),
   id: z.string(),
   section: z.string(),
+  when: When.optional(),
+  translations: Translations,
 };
 
 const InputValue = z.union([z.string().default(""), z.number().default(0)]);
@@ -35,6 +53,7 @@ const InputSetting = z.object({
   attributes: z.object({
     mode: z.enum(["text", "number"]),
     placeholder: z.string().optional(),
+    translations: Translations,
     value: InputValue,
     default: InputValue,
   }),
@@ -60,6 +79,7 @@ const DropdownSetting = z.object({
         value: z.union([z.string(), z.number()]),
         label: z.union([z.string(), z.number()]),
         img: z.string().optional(),
+        translations: Translations,
       }),
     ),
   }),
@@ -130,28 +150,29 @@ const FontSetting = z.object({
   }),
 });
 
-// A table's column: a field without its section and value, whose default
-// fills the cell of a new row. A slider has no room for its number in a cell.
+// A table's column: a field without its section, conditions and value, whose
+// default fills the cell of a new row. A slider has no room for its number in
+// a cell.
 const ColumnSchema = z.discriminatedUnion("type", [
-  InputSetting.omit({ section: true }).extend({
+  InputSetting.omit({ section: true, when: true }).extend({
     attributes: InputSetting.shape.attributes.omit({ value: true }),
   }),
-  DropdownSetting.omit({ section: true }).extend({
+  DropdownSetting.omit({ section: true, when: true }).extend({
     attributes: DropdownSetting.shape.attributes.omit({ value: true }),
   }),
-  ColorSetting.omit({ section: true }).extend({
+  ColorSetting.omit({ section: true, when: true }).extend({
     attributes: ColorSetting.shape.attributes.omit({ value: true }),
   }),
-  CheckSetting.omit({ section: true }).extend({
+  CheckSetting.omit({ section: true, when: true }).extend({
     attributes: CheckSetting.shape.attributes.omit({ value: true }),
   }),
-  ToggleSetting.omit({ section: true }).extend({
+  ToggleSetting.omit({ section: true, when: true }).extend({
     attributes: ToggleSetting.shape.attributes.omit({ value: true }),
   }),
-  GiftsSetting.omit({ section: true }).extend({
+  GiftsSetting.omit({ section: true, when: true }).extend({
     attributes: GiftsSetting.shape.attributes.omit({ value: true }),
   }),
-  FontSetting.omit({ section: true }).extend({
+  FontSetting.omit({ section: true, when: true }).extend({
     attributes: FontSetting.shape.attributes.omit({ value: true }),
   }),
 ]);
@@ -201,7 +222,9 @@ export const OverlayConfigSchema = z
   })
   .superRefine((data, ctx) => {
     const seenSectionIds = new Set();
-    const seenFieldIds = new Set();
+    // The fields listed so far, by id
+    /** @type {Map<string, Field>} */
+    const seenFields = new Map();
 
     data.sections.forEach((section, index) => {
       if (seenSectionIds.has(section.id)) {
@@ -223,7 +246,7 @@ export const OverlayConfigSchema = z
         });
       }
 
-      if (seenFieldIds.has(field.id)) {
+      if (seenFields.has(field.id)) {
         ctx.addIssue({
           code: "custom",
           message: `Duplicate field ID found: '${field.id}'. Each field must have a unique ID.`,
@@ -231,11 +254,94 @@ export const OverlayConfigSchema = z
         });
       }
 
-      seenFieldIds.add(field.id);
+      checkWhen(field, index, seenFields, ctx);
+      seenFields.set(field.id, field);
 
       if (field.type === "table") checkTable(field, index, ctx);
     });
   });
+
+/** @typedef {z.infer<typeof FieldsSchema>} Field */
+/** @typedef {z.infer<typeof When>[string]} Condition */
+
+/**
+ * Each condition names a field listed earlier, which also rules out cycles,
+ * that isn't a table, with values that field can have.
+ * @param {Field} field
+ * @param {number} index
+ * @param {Map<string, Field>} seen
+ * @param {z.RefinementCtx} ctx
+ */
+function checkWhen(field, index, seen, ctx) {
+  for (const [id, condition] of Object.entries(field.when ?? {})) {
+    const path = ["fields", index, "when", id];
+    const other = seen.get(id);
+    if (!other || other.type === "table") {
+      ctx.addIssue({
+        code: "custom",
+        message: other
+          ? `Invalid condition: '${id}' is a table, which a condition can't name.`
+          : `Invalid condition: '${id}' is not a field listed before '${field.id}'.`,
+        path,
+      });
+      continue;
+    }
+
+    const list = Array.isArray(other.attributes.default);
+    for (const value of conditionValues(condition)) {
+      if (!fits(other, list ? [value] : value)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Invalid condition: '${id}' can't have the value ${JSON.stringify(value)}.`,
+          path,
+        });
+      }
+    }
+  }
+}
+
+/**
+ * The values a condition lists, `not`'s included.
+ * @param {Condition} condition
+ */
+function conditionValues(condition) {
+  const values =
+    typeof condition === "object" && !Array.isArray(condition)
+      ? condition.not
+      : condition;
+  return Array.isArray(values) ? values : [values];
+}
+
+/**
+ * Whether a value can be the field's: of its default's kind, one of a
+ * dropdown's options and within a slider's range. Tokio's `fits`, which also
+ * decides what an update keeps.
+ * @param {Exclude<Field, { type: "table" }>} field
+ * @param {unknown} value
+ */
+function fits(field, value) {
+  /** @type {unknown} */
+  const fallback = field.attributes.default;
+  if (Array.isArray(fallback) !== Array.isArray(value)) return false;
+  if (!Array.isArray(value) && typeof value !== typeof fallback) return false;
+
+  if (field.type === "dropdown") {
+    const options = new Set(field.attributes.options.map((o) => o.value));
+    /** @type {unknown[]} */
+    const values = Array.isArray(value) ? value : [value];
+    return values.every(
+      (v) => (typeof v === "string" || typeof v === "number") && options.has(v),
+    );
+  }
+  if (field.type === "slider") {
+    return (
+      typeof value === "number" &&
+      value >= field.attributes.min &&
+      value <= field.attributes.max
+    );
+  }
+  return true;
+}
 
 /**
  * A table's column ids are its own, it has no more rows than its max, and each
