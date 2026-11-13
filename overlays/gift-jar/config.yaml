@@ -3,17 +3,22 @@
 sections:
   - name: Jar
     id: jar
+    translations: { es: Frasco }
   - name: Gift message
     id: message
+    translations: { es: Mensaje del regalo }
   - name: Gifter
     id: gifter
+    translations: { es: Quien regala }
   - name: Colors
     id: colors
+    translations: { es: Colores }
 fields:
   - name: Jar
     id: jar
     type: dropdown
     section: jar
+    translations: { es: Frasco }
     attributes:
       multiple: false
       searchable: false
@@ -22,20 +27,27 @@ fields:
       options:
         - value: mason
           label: Mason jar
+          translations: { es: Frasco de conserva }
         - value: apothecary
           label: Candy jar
+          translations: { es: Frasco de dulces }
         - value: fishbowl
           label: Fishbowl
+          translations: { es: Pecera }
         - value: tip
           label: Tip jar
+          translations: { es: Frasco de propinas }
         - value: honey
           label: Honey jar
+          translations: { es: Frasco de miel }
         - value: heart
           label: Heart bowl
+          translations: { es: Cuenco de corazón }
   - name: Gifts the jar holds
     id: max_gifts
     type: slider
     section: jar
+    translations: { es: Regalos que caben en el frasco }
     attributes:
       min: 30
       max: 1000
@@ -45,6 +57,7 @@ fields:
     id: overflow
     type: toggle
     section: jar
+    translations: { es: Dejar que los regalos se salgan del frasco }
     attributes:
       value: false
       default: false
@@ -52,6 +65,7 @@ fields:
     id: gift_size
     type: slider
     section: jar
+    translations: { es: Tamaño de los regalos }
     attributes:
       min: 20
       max: 50
@@ -61,6 +75,7 @@ fields:
     id: reset_hours
     type: slider
     section: jar
+    translations: { es: Horas sin regalos para vaciar el frasco }
     attributes:
       min: 1
       max: 24
@@ -70,6 +85,7 @@ fields:
     id: show_total
     type: toggle
     section: jar
+    translations: { es: Mostrar el total de monedas del frasco }
     attributes:
       value: true
       default: true
@@ -77,6 +93,7 @@ fields:
     id: show_message
     type: toggle
     section: message
+    translations: { es: Mostrar un mensaje por cada regalo }
     attributes:
       value: true
       default: true
@@ -84,6 +101,8 @@ fields:
     id: message_seconds
     type: slider
     section: message
+    when: { show_message: true }
+    translations: { es: Segundos que dura el mensaje }
     attributes:
       min: 2
       max: 15
@@ -93,6 +112,7 @@ fields:
     id: show_gifter
     type: toggle
     section: gifter
+    translations: { es: Mostrar a quien envió el último regalo }
     attributes:
       value: true
       default: true
@@ -100,6 +120,8 @@ fields:
     id: gifter_seconds
     type: slider
     section: gifter
+    when: { show_gifter: true }
+    translations: { es: Segundos que se queda quien regala }
     attributes:
       min: 3
       max: 30
@@ -109,6 +131,7 @@ fields:
     id: glass_color
     type: color
     section: colors
+    translations: { es: Vidrio }
     attributes:
       value: c4d0d8
       default: c4d0d8
@@ -116,6 +139,7 @@ fields:
     id: text_color
     type: color
     section: colors
+    translations: { es: Texto }
     attributes:
       value: ffffff
       default: ffffff
@@ -123,6 +147,7 @@ fields:
     id: coin_color
     type: color
     section: colors
+    translations: { es: Monedas }
     attributes:
       value: ffc93c
       default: ffc93c
@@ -130,6 +155,8 @@ fields:
     id: bar_color
     type: color
     section: colors
+    when: { show_gifter: true }
+    translations: { es: Barra de cuenta regresiva }
     attributes:
       value: e8222b
       default: e8222b
@@ -137,6 +164,7 @@ fields:
     id: panel_color
     type: color
     section: colors
+    translations: { es: Fondo del mensaje y de quien regala }
     attributes:
       value: 1f1f23
       default: 1f1f23
