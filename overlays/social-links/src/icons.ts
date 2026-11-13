@@ -1,9 +1,5 @@
 // Inline SVG icons, drawn for this overlay.
 
-export const HEART = `<svg viewBox="0 0 24 24" aria-hidden="true">
-  <path d="M12 21s-9-6.5-9-12.2C3 5.6 5.4 3.5 8 3.5c1.8 0 3.2 1 4 2.5.8-1.5 2.2-2.5 4-2.5 2.6 0 5 2.1 5 5.3C21 14.5 12 21 12 21z"/>
-</svg>`;
-
 // For the "Website" platform and for ones this version doesn't know. Its fill is on the <g>,
 // since the stylesheet's svg { fill: currentColor } would beat it on the <svg>.
 export const GLOBE = `<svg viewBox="0 0 24 24" aria-hidden="true">

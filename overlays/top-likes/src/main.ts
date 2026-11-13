@@ -1,4 +1,4 @@
-import { medal, PLACEHOLDER } from "@tokio-overlays/shared/icons";
+import { HEART, medal, PLACEHOLDER } from "@tokio-overlays/shared/icons";
 import { SAMPLE_USERS } from "@tokio-overlays/shared/samples";
 import { hours, randomInt } from "@tokio-overlays/shared/util";
 import {
@@ -7,7 +7,7 @@ import {
   type ConfigData,
   type UserData,
 } from "@tokioapp/overlay";
-import { CROWN, HEART } from "./icons";
+import { CROWN } from "./icons";
 import { Ranking, type Viewer } from "./ranking";
 import "./style.css";
 

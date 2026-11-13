@@ -32,6 +32,11 @@ export const COIN = `<svg viewBox="0 0 24 24" aria-hidden="true">
   <path d="M7.4 8.6a6.4 6.4 0 0 1 4.2-2.4" fill="none" stroke="rgb(255 255 255 / .6)" stroke-width="1.8" stroke-linecap="round"/>
 </svg>`;
 
+// Filled by the page's CSS.
+export const HEART = `<svg viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 21s-9-6.5-9-12.2C3 5.6 5.4 3.5 8 3.5c1.8 0 3.2 1 4 2.5.8-1.5 2.2-2.5 4-2.5 2.6 0 5 2.1 5 5.3C21 14.5 12 21 12 21z"/>
+</svg>`;
+
 // For viewers without a profile picture, or when it doesn't load. Its container rounds it.
 export const PLACEHOLDER = `<svg viewBox="0 0 100 100" aria-hidden="true">
   <rect width="100" height="100" fill="#d4d4d4"/>

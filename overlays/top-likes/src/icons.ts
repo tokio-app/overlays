@@ -12,7 +12,3 @@ export const CROWN = `<svg viewBox="-3 -3 70 62" aria-hidden="true">
     <circle cx="32" cy="36.3" r="2.8" fill="#e8222b"/>
   </g>
 </svg>`;
-
-export const HEART = `<svg viewBox="0 0 24 24" aria-hidden="true">
-  <path d="M12 21s-9-6.5-9-12.2C3 5.6 5.4 3.5 8 3.5c1.8 0 3.2 1 4 2.5.8-1.5 2.2-2.5 4-2.5 2.6 0 5 2.1 5 5.3C21 14.5 12 21 12 21z"/>
-</svg>`;
