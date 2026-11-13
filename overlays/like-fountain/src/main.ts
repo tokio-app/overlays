@@ -1,9 +1,6 @@
-import {
-  tokio,
-  TOKIO_EVENTS,
-  type ConfigData,
-  type UserData,
-} from "@tokioapp/overlay";
+import { SAMPLE_USERS } from "@tokio-overlays/shared/samples";
+import { find, randomInt } from "@tokio-overlays/shared/util";
+import { tokio, TOKIO_EVENTS, type ConfigData } from "@tokioapp/overlay";
 import { Fountain, isOrigin } from "./fountain";
 import "./style.css";
 
@@ -15,22 +12,6 @@ const overlayId = window.__OVERLAY_ID__ || params.get("id") || "";
 // sample viewers keep liking until the first real like, so the preview doesn't sit empty.
 const preview = window.name === `TOKIO_APP-${overlayId}`;
 const demo = preview || params.has("demo");
-
-const SAMPLE_USERS: UserData[] = [
-  "Sunny Fox",
-  "Pixel Panda",
-  "Lucky Tiger",
-  "Cosmic Owl",
-  "Happy Koala",
-  "Neon Wolf",
-  "Chill Otter",
-  "Brave Lynx",
-].map((name, i) => ({
-  username: name,
-  handle: `@${name.toLowerCase().replace(" ", "_")}`,
-  // Their hearts rise without them when offline.
-  profilePictures: [`https://picsum.photos/seed/tokio${i + 1}/200/200`],
-}));
 
 const fountain = new Fountain(find("fountain", HTMLCanvasElement));
 applyConfig(window.__OVERLAY_CONFIG__);
@@ -74,12 +55,6 @@ function fit() {
   fountain.resize(innerWidth, innerHeight, devicePixelRatio);
 }
 
-function find<T extends HTMLElement>(id: string, type: new () => T): T {
-  const el = document.getElementById(id);
-  if (!(el instanceof type)) throw new Error(`#${id} is missing.`);
-  return el;
-}
-
 // Sample viewers send batches of 1 to 15 likes at uneven times, as on a LIVE. Returns a function
 // that stops it.
 function playSample() {
@@ -91,8 +66,4 @@ function playSample() {
   };
   timer = setTimeout(tick, 300);
   return () => clearTimeout(timer);
-}
-
-function randomInt(min: number, max: number) {
-  return min + Math.floor(Math.random() * (max - min + 1));
 }
