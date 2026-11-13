@@ -1,11 +1,11 @@
-import type { Lens, Point } from "@tokio-overlays/shared/jar/types";
+import type { JarShape, Lens, Point } from "@tokio-overlays/shared/jar/types";
 
 /**
  * One jar the streamer can pick. The glass is two SVG layers with the gifts' canvas between
  * them; the physics and the canvas's refraction come from the same numbers, so the gifts rest
  * where the glass is.
  */
-export interface JarDesign {
+export interface JarDesign extends JarShape {
   id: string;
   label: string;
   /** The jar's box. Every jar stands on the same line, centered on the same x. */

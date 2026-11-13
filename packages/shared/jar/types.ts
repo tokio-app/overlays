@@ -37,3 +37,22 @@ export interface Lens {
   clip: string;
   strips: Strip[];
 }
+
+/** What the jar's engine reads of a jar, in the jar's own units. */
+export interface JarShape {
+  /** The jar's box. Every jar stands on the same line, centered on the same x. */
+  width: number;
+  height: number;
+  /** The inner wall, from the opening's left edge around the floor to its right edge. */
+  outline: Point[];
+  /** The jar's silhouette, from the rim's top on the left around and back up. Closed across it. */
+  outside: Point[];
+  /** The gifts drop in between `left` and `right`, above `y`. */
+  mouth: { left: number; right: number; y: number };
+  /** The body's top: once gifts rest above it, the jar is full. */
+  bodyTop: number;
+  /** The area inside the body below its top, in px², for how many gifts a reload pours. */
+  bodyArea: number;
+  /** How the glass bends the gifts behind it. None bends nothing. */
+  lenses?: Lens[];
+}

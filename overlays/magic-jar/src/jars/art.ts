@@ -296,6 +296,5 @@ export function vessel(spec: VesselSpec): JarDesign {
     front: `<svg ${view}>
   ${spec.front}
 </svg>`,
-    lenses: [],
   };
 }

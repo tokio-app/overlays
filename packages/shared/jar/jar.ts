@@ -1,20 +1,31 @@
 import { Bodies, Body, Composite, Engine, Sleeping } from "matter-js";
-import {
-  GIFT_BOX,
-  isSettled,
-  loadGiftPicture,
-  onGiftPicture,
-} from "@tokio-overlays/shared/jar/gifts";
-import {
-  contains,
-  glassWalls,
-  placement,
-  STAGE,
-  walls,
-  type JarDesign,
-  type Point,
-} from "./jars";
-import type { Drop } from "@tokio-overlays/shared/jar/tally";
+import { clamp } from "../util";
+import { contains, glassWalls, walls } from "./geometry";
+import { GIFT_BOX, isSettled, loadGiftPicture, onGiftPicture } from "./gifts";
+import type { Drop } from "./tally";
+import type { JarShape, Point, Rect, Strip, Wall } from "./types";
+
+/**
+ * The design stage, in px. Its height is fixed and its width is the page's, at least
+ * `minWidth`: the widest jar (380 drawn, or 460 of pictures) with room for a gift's message on
+ * each side, so short names aren't cut. Pages as wide as 16:9 never need it; narrower ones show
+ * the stage a little smaller instead. The page scales it to fit.
+ */
+export const STAGE = { height: 700, minWidth: 1180 };
+
+/** Where a jar's box sits on a stage `stageWidth` px wide: in its middle, on the line `bottom`. */
+export function placement(
+  jar: { width: number; height: number },
+  stageWidth: number,
+  bottom: number,
+) {
+  return {
+    x: stageWidth / 2 - jar.width / 2,
+    y: bottom - jar.height,
+    width: jar.width,
+    height: jar.height,
+  };
+}
 
 export interface JarOptions {
   /** The most gifts in the jar. */
@@ -54,13 +65,43 @@ interface Ghost {
 // Which gifts are too many: all of them, or with overflow off, those in the jar or those beside it.
 type Extra = "all" | "jar" | "beside";
 
-type Wall = ReturnType<typeof walls>[number];
-
 // A canvas the gifts are drawn on, and its place on the stage in px.
 interface Target {
   ctx: CanvasRenderingContext2D;
   left: number;
   top: number;
+}
+
+/**
+ * A part of the glass that bends the gifts behind it. Its layers cover only the lens, at whole
+ * pixels of the inner canvas, so they're copied without resampling.
+ */
+interface Lens {
+  clip: Path2D;
+  strips: Strip[];
+  /** The strips' `to` together, in the jar's units. */
+  bounds: Rect;
+  /** Each strip's `from` in the occupancy grid: first and last column, first and last row. */
+  cells: Int32Array;
+  /** The bounds' cells. */
+  area: Int32Array;
+  /** The lenses before it whose strips may reach into it. */
+  overlaps: Lens[];
+  /** Drawn this frame. */
+  drawn: boolean;
+  /** Each strip's transform onto the layers and its source on the gifts' canvas, in px. */
+  draws: Float64Array;
+  /** Where the layers sit on the inner canvas, in px, and the jar's corner on them. */
+  x: number;
+  y: number;
+  originX: number;
+  originY: number;
+  /** Where the glass shows its bent gifts instead of the gifts behind it. */
+  mask: CanvasRenderingContext2D;
+  /** How much the glass darkens each strip. */
+  shade: CanvasRenderingContext2D;
+  /** This frame's bent gifts. */
+  bent: CanvasRenderingContext2D;
 }
 
 const STEP_MS = 1000 / 60;
@@ -119,32 +160,37 @@ const EDGE = 0x10;
 const GIFT_SIDES = 12;
 // Gift pictures are about 100 to 250 px, so sharper canvases would only cost memory.
 const MAX_PIXEL_RATIO = 2;
+// The occupancy grid's cells, in the jar's units. Strips with no gift under them are skipped.
+const CELL = 8;
 
 /**
  * The gifts in the jar: a matter-js world with the jar's walls, drawn onto a canvas that sits
- * between the art's two layers, so the gifts look inside the glass. Gifts are round bodies, and
- * each picture is drawn rotated with its body. The canvas covers only the jar and the room above
- * it, up to the page's top, where gifts drop in from.
+ * between the jar's two glass layers. Gifts are round bodies, and each picture is drawn rotated
+ * with its body. A jar with lenses has its gifts drawn on a canvas of their own first, then copied
+ * with the glass's refraction: squeezed and darker next to the walls, as seen through thick glass.
+ * Both canvases cover only the jar and the room above it, up to the page's top, where gifts drop
+ * in from.
  *
  * Without overflow, the jar is full once gifts rest above its body's top, and then its oldest gifts
  * go as new ones drop in. With overflow, it fills to the brim and the gifts spill over its rim, down
  * its outside and onto the surface it stands on, out to the stage's sides: its oldest go once the
  * heap over it can't slide off or the pile reaches the page's top. Past the gift limit the oldest go
  * too. A gift too wide for the jar drops beside it onto that surface, with or without overflow.
- * Gifts outside the glass go on a canvas over it, as wide as the stage.
+ * Gifts outside the glass go on a canvas over it, unbent, as wide as the stage.
  *
  * Frames are only drawn while something moves: the loop stops when every gift sleeps.
  */
 export class Jar {
   private _engine = Engine.create({ enableSleeping: true });
   private _ctx: CanvasRenderingContext2D;
-  // Where the gifts inside the glass are drawn, and those outside it.
+  private _gifts = document.createElement("canvas");
+  // Where the gifts inside the glass are drawn, unbent, and those outside it.
   private _giftsTarget: Target;
   private _spillTarget: Target;
-  private _design!: JarDesign;
+  private _design!: JarShape;
   private _stageWidth = STAGE.minWidth;
   private _box = { x: 0, y: 0, width: 0, height: 0 };
-  // What the canvases were last sized for.
+  // What the canvases and the lenses' layers were last sized for.
   private _fitted = "";
   // The glass's silhouette on the stage, and its bounds, for telling gifts outside it.
   private _outside: Point[] = [];
@@ -154,6 +200,13 @@ export class Jar {
   private _biggest = 0;
   private _overflow = false;
   private _walls: Body[] = [];
+  private _lenses: Lens[] = [];
+  private _shade = "#3c4246";
+  // Which cells of the jar's box the inner canvas has gifts in, this frame.
+  private _grid = new Uint8Array(0);
+  private _columns = 0;
+  private _rows = 0;
+  private _hits = new Uint8Array(0);
   private _pieces: Piece[] = [];
   private _ghosts: Ghost[] = [];
   private _queue: Drop[] = [];
@@ -182,8 +235,10 @@ export class Jar {
   constructor(
     private _canvas: HTMLCanvasElement,
     private _spill: HTMLCanvasElement,
-    design: JarDesign,
+    design: JarShape,
     public options: JarOptions,
+    // The line the jar stands on, in stage px.
+    private _bottom: number,
   ) {
     this._ctx = context(_canvas);
     this._giftsTarget = { ctx: this._ctx, left: 0, top: 0 };
@@ -200,7 +255,7 @@ export class Jar {
   }
 
   /** Swaps the jar, and pours `drops` into the new one. */
-  setDesign(design: JarDesign, drops: readonly Drop[]) {
+  setDesign(design: JarShape, drops: readonly Drop[]) {
     this.clear();
     this._design = design;
     // Through its mouth, and covering at most a third of what it holds, so one gift can't empty
@@ -212,6 +267,27 @@ export class Jar {
       (2 * Math.sqrt(third / Math.PI)) / BODY_SHRINK,
     );
     this._biggest = (STAGE.minWidth - design.width) / 2 - BESIDE_MARGIN;
+    // The occupancy grid is only for the lenses.
+    const lenses = design.lenses ?? [];
+    this._columns = lenses.length > 0 ? Math.ceil(design.width / CELL) : 0;
+    this._rows = lenses.length > 0 ? Math.ceil(design.height / CELL) : 0;
+    this._grid = new Uint8Array(this._columns * this._rows);
+    for (const lens of this._lenses) {
+      for (const ctx of [lens.mask, lens.shade, lens.bent]) {
+        ctx.canvas.width = 0;
+        ctx.canvas.height = 0;
+      }
+    }
+    this._lenses = [];
+    for (const { clip, strips } of lenses) {
+      this._lenses.push(this.lens(clip, strips, this._lenses));
+    }
+    // Without lenses, nothing bends: the gifts are drawn straight onto the jar's canvas.
+    this._giftsTarget.ctx =
+      lenses.length > 0 ? context(this._gifts) : this._ctx;
+    this._hits = new Uint8Array(
+      Math.max(0, ...this._lenses.map(({ strips }) => strips.length)),
+    );
     this._fitted = "";
     this.place();
     this.settle(drops);
@@ -239,6 +315,15 @@ export class Jar {
     this.buildWalls();
     if (!overflow) this.removeExtra(now);
     this.fit();
+    this._dirty = true;
+    this.wake();
+  }
+
+  /** The color the glass darkens the gifts behind its edges with. */
+  setShade(color: string) {
+    if (color === this._shade) return;
+    this._shade = color;
+    this.paintShades();
     this._dirty = true;
     this.wake();
   }
@@ -612,7 +697,7 @@ export class Jar {
 
   // Puts the jar in the middle of the stage, on its line, moving the gifts with it.
   private place() {
-    const box = placement(this._design, this._stageWidth);
+    const box = placement(this._design, this._stageWidth, this._bottom);
     const dx = box.x - this._box.x;
     const dy = box.y - this._box.y;
     this._box = box;
@@ -697,8 +782,8 @@ export class Jar {
     });
   }
 
-  // Sizes the canvases for the jar's place, the pixel ratio and the gift size. Resizing a canvas
-  // clears it, so nothing is redone when nothing changed.
+  // Sizes the canvases and the lenses' layers for the jar's place, the pixel ratio and the
+  // gift size. Resizing a canvas clears it, so nothing is redone when nothing changed.
   private fit() {
     const ratio = this._pixelRatio;
     const box = this._box;
@@ -728,6 +813,9 @@ export class Jar {
     this._giftsTarget.left = left;
     this._giftsTarget.top = top;
     this.size(this._canvas, left, top, right - left, bottom - top);
+    const bends = this._lenses.length > 0;
+    this._gifts.width = bends ? right - left : 0;
+    this._gifts.height = bends ? bottom - top : 0;
     // Only while gifts may be outside the glass, and down to the biggest gift on the surface the
     // jar stands on.
     const floor = Math.ceil(
@@ -744,7 +832,76 @@ export class Jar {
       spills ? clamp(floor, 0, stageHeight) : 0,
     );
     this._spill.hidden = !spills;
+
+    // The jar's corner on the inner canvas.
+    const boxX = box.x * ratio - left;
+    const boxY = box.y * ratio - top;
+    for (const lens of this._lenses) {
+      const { bounds, strips, draws, mask } = lens;
+      lens.x = Math.max(0, Math.floor(boxX + bounds.x * ratio) - 1);
+      lens.y = Math.max(0, Math.floor(boxY + bounds.y * ratio) - 1);
+      lens.originX = boxX - lens.x;
+      lens.originY = boxY - lens.y;
+      const width =
+        Math.min(
+          right - left,
+          Math.ceil(boxX + (bounds.x + bounds.width) * ratio) + 1,
+        ) - lens.x;
+      const height =
+        Math.min(
+          bottom - top,
+          Math.ceil(boxY + (bounds.y + bounds.height) * ratio) + 1,
+        ) - lens.y;
+      for (const ctx of [lens.mask, lens.shade, lens.bent]) {
+        ctx.canvas.width = Math.max(0, width);
+        ctx.canvas.height = Math.max(0, height);
+      }
+      strips.forEach(({ from, to, flipX, flipY }, i) => {
+        draws.set(
+          [
+            flipX ? -ratio : ratio,
+            flipY ? -ratio : ratio,
+            lens.originX + (to.x + (flipX ? to.width : 0)) * ratio,
+            lens.originY + (to.y + (flipY ? to.height : 0)) * ratio,
+            boxX + from.x * ratio,
+            boxY + from.y * ratio,
+            from.width * ratio,
+            from.height * ratio,
+            to.width,
+            to.height,
+          ],
+          i * 10,
+        );
+      });
+      // Where the strips replace the gifts behind the glass: inside the lens, under a strip.
+      mask.save();
+      mask.setTransform(ratio, 0, 0, ratio, lens.originX, lens.originY);
+      mask.clip(lens.clip);
+      for (const { to } of strips) {
+        mask.fillRect(to.x, to.y, to.width, to.height);
+      }
+      mask.restore();
+    }
+    this.paintShades();
     this._dirty = true;
+  }
+
+  // Darker toward the outside, and in the glass's color: each strip's darkness, together, so a
+  // frame darkens a lens's strips with one copy.
+  private paintShades() {
+    const ratio = this._pixelRatio;
+    for (const { shade, clip, strips, originX, originY } of this._lenses) {
+      wipe(shade);
+      shade.save();
+      shade.setTransform(ratio, 0, 0, ratio, originX, originY);
+      shade.clip(clip);
+      shade.fillStyle = this._shade;
+      for (const { to, shade: alpha } of strips) {
+        shade.globalAlpha = alpha;
+        shade.fillRect(to.x, to.y, to.width, to.height);
+      }
+      shade.restore();
+    }
   }
 
   // A canvas's size in px, and its place on the stage.
@@ -763,6 +920,85 @@ export class Jar {
     style.top = `${top / ratio}px`;
     style.width = `${width / ratio}px`;
     style.height = `${height / ratio}px`;
+  }
+
+  // A lens's strips, laid out on the occupancy grid. Its layers are sized by fit().
+  private lens(d: string, strips: Strip[], before: Lens[]): Lens {
+    const cells = new Int32Array(strips.length * 4);
+    strips.forEach(({ from }, i) => cells.set(this.cellsOf(from), i * 4));
+    const left = Math.min(...strips.map(({ to }) => to.x));
+    const top = Math.min(...strips.map(({ to }) => to.y));
+    const right = Math.max(...strips.map(({ to }) => to.x + to.width));
+    const bottom = Math.max(...strips.map(({ to }) => to.y + to.height));
+    const bounds = {
+      x: left,
+      y: top,
+      width: right - left,
+      height: bottom - top,
+    };
+    const layer = () => context(document.createElement("canvas"));
+    return {
+      clip: new Path2D(d),
+      strips,
+      bounds,
+      cells,
+      area: this.cellsOf(bounds),
+      overlaps: before.filter((lens) => meets(lens.bounds, bounds)),
+      drawn: false,
+      draws: new Float64Array(strips.length * 10),
+      x: 0,
+      y: 0,
+      originX: 0,
+      originY: 0,
+      mask: layer(),
+      shade: layer(),
+      bent: layer(),
+    };
+  }
+
+  // A rect's cells in the occupancy grid, clamped to it. None when it's off the grid.
+  private cellsOf({ x, y, width, height }: Rect): Int32Array {
+    return new Int32Array([
+      Math.max(0, Math.floor(x / CELL)),
+      Math.min(this._columns - 1, Math.floor((x + width) / CELL)),
+      Math.max(0, Math.floor(y / CELL)),
+      Math.min(this._rows - 1, Math.floor((y + height) / CELL)),
+    ]);
+  }
+
+  // Whether any cell of a range (4 numbers at `at`) has gifts.
+  private hit(cells: Int32Array, at: number): boolean {
+    const grid = this._grid;
+    const columns = this._columns;
+    for (let row = cells[at + 2]; row <= cells[at + 3]; row++) {
+      const start = row * columns;
+      for (let column = cells[at]; column <= cells[at + 1]; column++) {
+        if (grid[start + column]) return true;
+      }
+    }
+    return false;
+  }
+
+  // Marks the cells under a gift's picture, turned any way, as having gifts.
+  private mark(x: number, y: number, diameter: number) {
+    const reach = diameter * Math.SQRT1_2;
+    const left = Math.max(0, Math.floor((x - reach - this._box.x) / CELL));
+    const right = Math.min(
+      this._columns - 1,
+      Math.floor((x + reach - this._box.x) / CELL),
+    );
+    const top = Math.max(0, Math.floor((y - reach - this._box.y) / CELL));
+    const bottom = Math.min(
+      this._rows - 1,
+      Math.floor((y + reach - this._box.y) / CELL),
+    );
+    for (let row = top; row <= bottom; row++) {
+      this._grid.fill(
+        1,
+        row * this._columns + left,
+        row * this._columns + right + 1,
+      );
+    }
   }
 
   // Whether gifts may be outside the glass: with overflow, beside the jar, or while the last ones
@@ -1185,7 +1421,10 @@ export class Jar {
     this._dirty = false;
     this._innerMoved = false;
     this._spillMoved = false;
-    if (inner) wipe(inner.ctx);
+    if (inner) {
+      wipe(inner.ctx);
+      this._grid.fill(0);
+    }
     if (spill) wipe(spill.ctx);
 
     for (const { body, drop, diameter, outside } of this._pieces) {
@@ -1193,6 +1432,7 @@ export class Jar {
       if (!target) continue;
       const { x, y } = body.position;
       this.picture(target, drop, x, y, body.angle, diameter, 1);
+      if (target === inner) this.mark(x, y, diameter);
     }
     for (const ghost of this._ghosts) {
       const target = ghost.outside ? spill : inner;
@@ -1201,6 +1441,72 @@ export class Jar {
       const diameter = ghost.diameter * (0.6 + 0.4 * alpha);
       const { drop, x, y, angle } = ghost;
       this.picture(target, drop, x, y, angle, diameter, alpha);
+      if (target === inner) this.mark(x, y, diameter);
+    }
+
+    if (!inner || inner.ctx === this._ctx) return;
+    wipe(this._ctx);
+    this._ctx.drawImage(this._gifts, 0, 0);
+    this.refract();
+  }
+
+  // Shows the gifts next to the glass's edges bent as the glass bends them. Each lens's strips
+  // copy the gifts into its layer, mirrored and squeezed; its mask keeps them inside the lens,
+  // and its shade darkens them. Then they replace the gifts behind the lens.
+  private refract() {
+    const ctx = this._ctx;
+    const hits = this._hits;
+    for (const lens of this._lenses) {
+      const { cells, draws, bent } = lens;
+      const count = lens.strips.length;
+      let bending = false;
+      for (let i = 0; i < count; i++) {
+        hits[i] = this.hit(cells, i * 4) ? 1 : 0;
+        if (hits[i]) bending = true;
+      }
+      // No gifts behind it, none to bend into it, and no lens before it drew into it.
+      lens.drawn =
+        bending ||
+        this.hit(lens.area, 0) ||
+        lens.overlaps.some(({ drawn }) => drawn);
+      if (!lens.drawn) continue;
+
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.drawImage(lens.mask.canvas, lens.x, lens.y);
+      ctx.globalCompositeOperation = "source-over";
+      if (bending) {
+        wipe(bent);
+        for (let i = 0; i < count; i++) {
+          if (!hits[i]) continue;
+          const at = i * 10;
+          bent.setTransform(
+            draws[at],
+            0,
+            0,
+            draws[at + 1],
+            draws[at + 2],
+            draws[at + 3],
+          );
+          bent.drawImage(
+            this._gifts,
+            draws[at + 4],
+            draws[at + 5],
+            draws[at + 6],
+            draws[at + 7],
+            0,
+            0,
+            draws[at + 8],
+            draws[at + 9],
+          );
+        }
+        bent.setTransform(1, 0, 0, 1, 0, 0);
+        bent.globalCompositeOperation = "destination-in";
+        bent.drawImage(lens.mask.canvas, 0, 0);
+        bent.globalCompositeOperation = "source-atop";
+        bent.drawImage(lens.shade.canvas, 0, 0);
+        bent.globalCompositeOperation = "source-over";
+        ctx.drawImage(bent.canvas, lens.x, lens.y);
+      }
     }
   }
 
@@ -1246,11 +1552,16 @@ function wipe(ctx: CanvasRenderingContext2D) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
 // The area a gift's body covers.
 function area(diameter: number): number {
   return Math.PI * ((diameter * BODY_SHRINK) / 2) ** 2;
+}
+
+function meets(a: Rect, b: Rect): boolean {
+  return (
+    a.x < b.x + b.width &&
+    b.x < a.x + a.width &&
+    a.y < b.y + b.height &&
+    b.y < a.y + a.height
+  );
 }

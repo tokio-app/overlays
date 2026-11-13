@@ -15,16 +15,15 @@ import {
 import { GIFT_BOX, SAMPLE_GIFTS } from "@tokio-overlays/shared/jar/gifts";
 import { COIN, PLACEHOLDER } from "@tokio-overlays/shared/icons";
 import { CROWN, STAR } from "./icons";
-import { Jar } from "./jar";
+import { Jar, placement, STAGE } from "@tokio-overlays/shared/jar/jar";
+import type { Point } from "@tokio-overlays/shared/jar/types";
 import {
+  BOTTOM,
   DEFAULT_JAR,
   JARS,
   loadDesign,
   loadLayer,
-  placement,
-  STAGE,
   type JarPictures,
-  type Point,
 } from "./jars";
 import { Tally, type Gifting } from "@tokio-overlays/shared/jar/tally";
 import "./style.css";
@@ -100,7 +99,7 @@ let design = await loadDesign(JARS[jarId]);
 let [backLayer, frontLayer] = await loadLayers(design);
 // The jar on the stage, or the one loading to replace it.
 let shownJar = jarId;
-const jar = new Jar(canvas, spill, design, { maxGifts, giftSize });
+const jar = new Jar(canvas, spill, design, { maxGifts, giftSize }, BOTTOM);
 jar.setOverflow(overflow);
 // Kept across reloads, since streaming apps reload overlays when scenes change.
 let tally = demo ? new Tally(resetMs, dropLimit()) : load();
@@ -267,7 +266,7 @@ function showEdges() {
 // Puts the jar in the middle of the stage, each bubble's tail on the jar, the tag's knot where its
 // bow is, and the total under where it stands.
 function placeDesign() {
-  const box = placement(design, stageWidth);
+  const box = placement(design, stageWidth, BOTTOM);
   const ground = Math.max(...design.outside.map((p) => p.y));
   const root = document.documentElement.style;
   root.setProperty("--stage-width", `${stageWidth}px`);

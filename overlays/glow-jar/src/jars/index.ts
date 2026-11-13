@@ -3,37 +3,13 @@ import { mason } from "./mason";
 import type { JarPictures } from "./types";
 
 export type { JarDesign, JarPictures } from "./types";
-export type { Point } from "@tokio-overlays/shared/jar/types";
-export {
-  contains,
-  glassWalls,
-  walls,
-} from "@tokio-overlays/shared/jar/geometry";
 export { loadDesign } from "./trace";
 export { loadLayer, type Layer } from "./tint";
 
-/**
- * The design stage, in px. Its height is fixed and its width is the page's, at least
- * `minWidth`: the widest jar's pictures (460) with room for a gift bubble on each side. Pages
- * as wide as 16:9 never need it; narrower ones show the stage a little smaller instead. main.ts
- * scales it to fit.
- */
-export const STAGE = { height: 700, minWidth: 1180 };
-
 // The pictures' bottom edge sits on this line, in the middle of the stage. The jar stands a little
 // above it, with the total under it.
-const BOTTOM = 630;
+export const BOTTOM = 630;
 
 /** The jars, by their value in config.yaml's jar setting. */
 export const JARS: Record<string, JarPictures> = { mason, bowl };
 export const DEFAULT_JAR = "mason";
-
-/** Where a jar's box sits on a stage `stageWidth` px wide. */
-export function placement(jar: JarPictures, stageWidth: number) {
-  return {
-    x: stageWidth / 2 - jar.width / 2,
-    y: BOTTOM - jar.height,
-    width: jar.width,
-    height: jar.height,
-  };
-}
