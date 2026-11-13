@@ -2,7 +2,7 @@ import { bowl } from "./bowl";
 import { mason } from "./mason";
 import type { JarPictures } from "./types";
 
-export type { JarDesign, JarPictures } from "./types";
+export type { JarPictures } from "./types";
 export { loadDesign } from "./trace";
 export { loadLayer, type Layer } from "./tint";
 

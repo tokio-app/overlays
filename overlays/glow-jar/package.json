@@ -12,11 +12,9 @@
   },
   "dependencies": {
     "@tokio-overlays/shared": "*",
-    "@tokioapp/overlay": "^1.1.0",
-    "matter-js": "^0.20.0"
+    "@tokioapp/overlay": "^1.1.0"
   },
   "devDependencies": {
-    "@types/matter-js": "^0.20.2",
     "typescript": "^7.0.2",
     "vite": "^8.3.4"
   }

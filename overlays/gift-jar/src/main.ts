@@ -1,6 +1,6 @@
+import { css, mix, parseColor, type RGB } from "@tokio-overlays/shared/color";
 import { startJarApp } from "@tokio-overlays/shared/jar/app";
 import type { Jar } from "@tokio-overlays/shared/jar/jar";
-import { css, mix, parseColor, type RGB } from "@tokio-overlays/shared/color";
 import { jarById } from "./jars";
 import "./style.css";
 
