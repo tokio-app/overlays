@@ -8,9 +8,8 @@ import {
   cubic,
   num,
   pathOf,
-  wallStrips,
-  type Surface,
-} from "./profile";
+} from "@tokio-overlays/shared/jar/geometry";
+import { wallStrips, type Surface } from "./profile";
 import {
   blur,
   blurs,
@@ -27,7 +26,8 @@ import {
   threads,
   tint,
 } from "./render";
-import type { JarDesign, Lens, Point } from "./types";
+import type { Lens, Point } from "@tokio-overlays/shared/jar/types";
+import type { JarDesign } from "./types";
 
 const WIDTH = 300;
 const HEIGHT = 432;

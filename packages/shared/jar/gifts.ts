@@ -1,5 +1,6 @@
 // Gift pictures: loading them, the gift box drawn for a picture that doesn't load, and the
 // sample gifts for the demo.
+import type { SampleGift } from "../samples";
 
 export interface GiftPicture {
   img: HTMLImageElement;
@@ -62,17 +63,6 @@ export const GIFT_BOX = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="ht
   <path d="M50 32C32 8 14 24 32 32zM50 32C68 8 86 24 68 32z" fill="#ffc93c"/>
   <rect x="14" y="44" width="72" height="8" rx="3" fill="rgb(0 0 0 / .12)"/>
 </svg>`)}`;
-
-export interface SampleGift {
-  id: string;
-  name: string;
-  coins: number;
-  image: string;
-  /** How often the demo picks it, against the others. */
-  weight: number;
-  /** The most gifts in one combo. */
-  maxCombo: number;
-}
 
 // Real gifts for the demo and the preview. Their pictures load from TikTok's CDN, so offline the
 // gift box shows instead. Cheap ones are common and the big one is rare.

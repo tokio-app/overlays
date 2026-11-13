@@ -1,4 +1,4 @@
-// Counts each gifter's streak of a gift from GIFT events, by the same rules as the jars' tally.ts.
+// Counts each gifter's streak of a gift from GIFT events.
 
 // A lower count this soon after a streak's last event is a late update, not a new streak.
 // Updates can arrive out of order within a batch, and TikTok closes a combo 3 to 4 s after its

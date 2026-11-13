@@ -1,17 +1,31 @@
 import { Bodies, Body, Composite, Engine, Sleeping } from "matter-js";
+import { clamp } from "../util";
+import { contains, glassWalls, walls } from "./geometry";
 import { GIFT_BOX, isSettled, loadGiftPicture, onGiftPicture } from "./gifts";
-import {
-  contains,
-  glassWalls,
-  placement,
-  STAGE,
-  walls,
-  type JarDesign,
-  type Point,
-  type Rect,
-  type Strip,
-} from "./jars";
 import type { Drop } from "./tally";
+import type { JarShape, Point, Rect, Strip, Wall } from "./types";
+
+/**
+ * The design stage, in px. Its height is fixed and its width is the page's, at least
+ * `minWidth`: the widest jar (380 drawn, or 460 of pictures) with room for a gift's message on
+ * each side, so short names aren't cut. Pages as wide as 16:9 never need it; narrower ones show
+ * the stage a little smaller instead. The page scales it to fit.
+ */
+export const STAGE = { height: 700, minWidth: 1180 };
+
+/** Where a jar's box sits on a stage `stageWidth` px wide: in its middle, on the line `bottom`. */
+export function placement(
+  jar: { width: number; height: number },
+  stageWidth: number,
+  bottom: number,
+) {
+  return {
+    x: stageWidth / 2 - jar.width / 2,
+    y: bottom - jar.height,
+    width: jar.width,
+    height: jar.height,
+  };
+}
 
 export interface JarOptions {
   /** The most gifts in the jar. */
@@ -50,8 +64,6 @@ interface Ghost {
 
 // Which gifts are too many: all of them, or with overflow off, those in the jar or those beside it.
 type Extra = "all" | "jar" | "beside";
-
-type Wall = ReturnType<typeof walls>[number];
 
 // A canvas the gifts are drawn on, and its place on the stage in px.
 interface Target {
@@ -154,9 +166,10 @@ const CELL = 8;
 /**
  * The gifts in the jar: a matter-js world with the jar's walls, drawn onto a canvas that sits
  * between the jar's two glass layers. Gifts are round bodies, and each picture is drawn rotated
- * with its body. The gifts are drawn on a canvas of their own first, then copied with the glass's
- * refraction: squeezed and darker next to the walls, as seen through thick glass. Both canvases
- * cover only the jar and the room above it, up to the page's top, where gifts drop in from.
+ * with its body. A jar with lenses has its gifts drawn on a canvas of their own first, then copied
+ * with the glass's refraction: squeezed and darker next to the walls, as seen through thick glass.
+ * Both canvases cover only the jar and the room above it, up to the page's top, where gifts drop
+ * in from.
  *
  * Without overflow, the jar is full once gifts rest above its body's top, and then its oldest gifts
  * go as new ones drop in. With overflow, it fills to the brim and the gifts spill over its rim, down
@@ -174,7 +187,7 @@ export class Jar {
   // Where the gifts inside the glass are drawn, unbent, and those outside it.
   private _giftsTarget: Target;
   private _spillTarget: Target;
-  private _design!: JarDesign;
+  private _design!: JarShape;
   private _stageWidth = STAGE.minWidth;
   private _box = { x: 0, y: 0, width: 0, height: 0 };
   // What the canvases and the lenses' layers were last sized for.
@@ -222,11 +235,13 @@ export class Jar {
   constructor(
     private _canvas: HTMLCanvasElement,
     private _spill: HTMLCanvasElement,
-    design: JarDesign,
+    design: JarShape,
     public options: JarOptions,
+    // The line the jar stands on, in stage px.
+    private _bottom: number,
   ) {
     this._ctx = context(_canvas);
-    this._giftsTarget = { ctx: context(this._gifts), left: 0, top: 0 };
+    this._giftsTarget = { ctx: this._ctx, left: 0, top: 0 };
     this._spillTarget = { ctx: context(_spill), left: 0, top: 0 };
 
     this._engine.gravity.y = 1.1;
@@ -240,7 +255,7 @@ export class Jar {
   }
 
   /** Swaps the jar, and pours `drops` into the new one. */
-  setDesign(design: JarDesign, drops: readonly Drop[]) {
+  setDesign(design: JarShape, drops: readonly Drop[]) {
     this.clear();
     this._design = design;
     // Through its mouth, and covering at most a third of what it holds, so one gift can't empty
@@ -252,8 +267,10 @@ export class Jar {
       (2 * Math.sqrt(third / Math.PI)) / BODY_SHRINK,
     );
     this._biggest = (STAGE.minWidth - design.width) / 2 - BESIDE_MARGIN;
-    this._columns = Math.ceil(design.width / CELL);
-    this._rows = Math.ceil(design.height / CELL);
+    // The occupancy grid is only for the lenses.
+    const lenses = design.lenses ?? [];
+    this._columns = lenses.length > 0 ? Math.ceil(design.width / CELL) : 0;
+    this._rows = lenses.length > 0 ? Math.ceil(design.height / CELL) : 0;
     this._grid = new Uint8Array(this._columns * this._rows);
     for (const lens of this._lenses) {
       for (const ctx of [lens.mask, lens.shade, lens.bent]) {
@@ -262,9 +279,12 @@ export class Jar {
       }
     }
     this._lenses = [];
-    for (const { clip, strips } of design.lenses) {
+    for (const { clip, strips } of lenses) {
       this._lenses.push(this.lens(clip, strips, this._lenses));
     }
+    // Without lenses, nothing bends: the gifts are drawn straight onto the jar's canvas.
+    this._giftsTarget.ctx =
+      lenses.length > 0 ? context(this._gifts) : this._ctx;
     this._hits = new Uint8Array(
       Math.max(0, ...this._lenses.map(({ strips }) => strips.length)),
     );
@@ -677,7 +697,7 @@ export class Jar {
 
   // Puts the jar in the middle of the stage, on its line, moving the gifts with it.
   private place() {
-    const box = placement(this._design, this._stageWidth);
+    const box = placement(this._design, this._stageWidth, this._bottom);
     const dx = box.x - this._box.x;
     const dy = box.y - this._box.y;
     this._box = box;
@@ -793,8 +813,9 @@ export class Jar {
     this._giftsTarget.left = left;
     this._giftsTarget.top = top;
     this.size(this._canvas, left, top, right - left, bottom - top);
-    this._gifts.width = right - left;
-    this._gifts.height = bottom - top;
+    const bends = this._lenses.length > 0;
+    this._gifts.width = bends ? right - left : 0;
+    this._gifts.height = bends ? bottom - top : 0;
     // Only while gifts may be outside the glass, and down to the biggest gift on the surface the
     // jar stands on.
     const floor = Math.ceil(
@@ -1423,7 +1444,7 @@ export class Jar {
       if (target === inner) this.mark(x, y, diameter);
     }
 
-    if (!inner) return;
+    if (!inner || inner.ctx === this._ctx) return;
     wipe(this._ctx);
     this._ctx.drawImage(this._gifts, 0, 0);
     this.refract();
@@ -1529,10 +1550,6 @@ function context(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
 function wipe(ctx: CanvasRenderingContext2D) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
 // The area a gift's body covers.

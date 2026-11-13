@@ -1,17 +1,4 @@
-/** A point in a jar's own units: x from the left of the jar's box, y from its top. */
-export interface Point {
-  x: number;
-  y: number;
-}
-
-/** A thin static rectangle the gifts rest against, in the jar's units. */
-export interface Wall {
-  x: number;
-  y: number;
-  length: number;
-  thickness: number;
-  angle: number;
-}
+import type { JarShape, Point } from "@tokio-overlays/shared/jar/types";
 
 /**
  * A jar as it ships: three pictures the same size, drawn at twice the stage's scale, and where
@@ -48,7 +35,7 @@ export interface JarPictures {
 }
 
 /** A jar with the edges read from its walls picture, in its own units. */
-export interface JarDesign extends JarPictures {
+export interface JarDesign extends JarPictures, JarShape {
   /** The inner wall, from the opening's left edge around the floor to its right edge. */
   outline: Point[];
   /**

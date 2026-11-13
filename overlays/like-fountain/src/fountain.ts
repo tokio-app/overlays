@@ -1,3 +1,4 @@
+import { clamp } from "@tokio-overlays/shared/util";
 import type { UserData } from "@tokioapp/overlay";
 
 /** Where the hearts rise from: the values of the `origin` setting. */
@@ -435,10 +436,6 @@ function context(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("This browser can't draw the hearts.");
   return ctx;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
 function random(min: number, max: number): number {

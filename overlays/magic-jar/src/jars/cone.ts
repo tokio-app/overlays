@@ -11,8 +11,8 @@ import {
   uid,
   vessel,
 } from "./art";
-import { num, pathOf } from "./geometry";
-import type { Point } from "./types";
+import { num, pathOf } from "@tokio-overlays/shared/jar/geometry";
+import type { Point } from "@tokio-overlays/shared/jar/types";
 
 const WIDTH = 380;
 const HEIGHT = 452;

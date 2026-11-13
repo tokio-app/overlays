@@ -32,12 +32,12 @@ Fixes # (issue)
 
 ## Checklist
 
-- [ ] Each overlay I changed has a new version in both `info.yaml` and `package.json`. Without it, the overlay isn't released.
+- [ ] Each overlay I changed, directly or through `packages/shared`, has a new version in both `info.yaml` and `package.json`. Without it, the overlay isn't released. `yarn release:build` warns about any it finds.
 - [ ] `yarn release:build` passes.
 - [ ] I imported the built overlay (its `dist/` folder) into Tokio and tested it in OBS Studio or TikTok LIVE Studio.
 - [ ] `preview.png` shows the overlay's current look.
 - [ ] New dependencies have permissive licenses (MIT, ISC, BSD, Apache-2.0). Ask before adding anything copyleft (GPL, AGPL, LGPL, MPL, CC BY-SA).
-- [ ] Commits follow Conventional Commits, scoped to the overlay, e.g. `feat(gift-goal): ...`.
+- [ ] Commits follow Conventional Commits, scoped to the overlay or to `shared`, e.g. `feat(gift-goal): ...`.
 
 ## Screenshots or GIF
 

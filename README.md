@@ -41,6 +41,8 @@ overlays/gift-goal/
 
 Use any framework, or none. The only requirement is that `yarn build` writes a static site to `dist/` with relative asset paths. The template uses Vite with plain TypeScript. For React, Svelte or Vue, add the framework's Vite plugin to `vite.config.ts`, and keep `base: "./"` and the setup block in `index.html`.
 
+Code that several overlays use lives in `packages/shared`. To use it, add `"@tokio-overlays/shared": "*"` to the overlay's `dependencies` and import what you need, such as `import { Streaks } from "@tokio-overlays/shared/streaks"`. The overlay's build bundles it.
+
 The build copies `info.yaml` and `config.yaml` into `dist/`. It then runs the checks Tokio's import does: the YAML files against Tokio's schemas, the exact setup block, and relative asset paths. The `dist/` folder is ready to import into Tokio.
 
 See [Building an overlay](https://tokio.ialfaro.com/docs/developers/building-an-overlay/) for `info.yaml`, `config.yaml`, the setup block and the [`@tokioapp/overlay`](https://www.npmjs.com/package/@tokioapp/overlay) library.
@@ -61,18 +63,18 @@ yarn new <id> ["Name"]  # start an overlay from the template
 yarn delete <id>        # delete an overlay (--force if it has uncommitted changes)
 yarn dev <id>           # its dev server
 yarn build [id...]      # build and check overlays (all of them without ids)
-yarn typecheck          # tsc for the scripts and every overlay with a typecheck script
+yarn typecheck          # tsc for the scripts, packages/shared and every overlay with a typecheck script
 yarn lint               # oxlint
 yarn format             # prettier
 yarn release:build      # build everything and prepare the next release in release/
 yarn release:notes      # print the next release's notes (after release:build)
 ```
 
-Commits follow [Conventional Commits](https://www.conventionalcommits.org/), scoped to the overlay they change: `feat(gift-goal): show the goal in coins`.
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/), scoped to the overlay they change, or `shared` for `packages/shared`: `feat(gift-goal): show the goal in coins`.
 
 ## Releases
 
-One release covers every overlay that is new or changed. Overlays have their own versions, in `info.yaml` and `package.json`, which must match. An overlay is only released when its version changes.
+One release covers every overlay that is new or changed. Overlays have their own versions, in `info.yaml` and `package.json`, which must match. An overlay is only released when its version changes. `yarn release:build` warns about an overlay whose build changed since its release while its version didn't, for example after a change to `packages/shared`.
 
 Tokio installs a new version in the background, unless its first number went up: then it asks the streamer first. Bump the first number (2.0.0) only for a change that makes streamers set the overlay up again, like settings that reset or a layout that moves.
 

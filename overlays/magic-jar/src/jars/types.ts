@@ -1,50 +1,12 @@
-/** A point in a jar's own units: x from the left of the jar's box, y from its top. */
-export interface Point {
-  x: number;
-  y: number;
-}
-
-export interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-/** A thin static rectangle the gifts rest against, in the jar's units. */
-export interface Wall {
-  x: number;
-  y: number;
-  length: number;
-  thickness: number;
-  angle: number;
-}
-
-/**
- * A piece of the gifts' canvas that the glass bends: the gifts in `from` are drawn into `to`,
- * squeezed or mirrored, then darkened by `shade` (0 to 1). In the jar's units.
- */
-export interface Strip {
-  from: Rect;
-  to: Rect;
-  flipX?: boolean;
-  flipY?: boolean;
-  shade: number;
-}
-
-/** Strips drawn inside one outline (an SVG path in the jar's units), so their edges follow it. */
-export interface Lens {
-  clip: string;
-  strips: Strip[];
-}
+import type { JarShape, Point } from "@tokio-overlays/shared/jar/types";
 
 /**
  * One jar the streamer can pick. Its body is two SVG layers with the gifts' canvas between them:
  * the inside behind the gifts, and the body with its ornaments over them, open where the gifts
- * show. The physics come from the same numbers, so the gifts rest where the body is. jar.ts is
- * gift-jar's, whose jars are glass: there "glass" means the body.
+ * show. The physics come from the same numbers, so the gifts rest where the body is. The jar's
+ * engine was written for glass jars: there "glass" means the body.
  */
-export interface JarDesign {
+export interface JarDesign extends JarShape {
   id: string;
   label: string;
   /** The colors its tones are mixed from, unless the streamer picks their own. */
@@ -74,6 +36,4 @@ export interface JarDesign {
   /** SVG markup behind and over the gifts. Its viewBox is the jar's box. */
   back: string;
   front: string;
-  /** How a glass body bends the gifts behind it. A drawn one bends nothing, so always none. */
-  lenses: Lens[];
 }

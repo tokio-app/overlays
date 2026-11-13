@@ -1,7 +1,7 @@
 // Repaints a jar's pictures in the main color, when they load and when the color changes. Never
 // while gifts drop.
 
-export type RGB = [number, number, number];
+import type { RGB } from "@tokio-overlays/shared/color";
 
 /**
  * A layer of the jar: its picture on a canvas, which `paint` redraws in another color. The tint

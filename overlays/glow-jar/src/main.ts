@@ -1,25 +1,35 @@
+import { css, mix, parseColor } from "@tokio-overlays/shared/color";
+import { COIN } from "@tokio-overlays/shared/icons";
+import { GIFT_BOX } from "@tokio-overlays/shared/jar/gifts";
+import { Jar, placement, STAGE } from "@tokio-overlays/shared/jar/jar";
+import {
+  loadTally,
+  playSample,
+  saveTally,
+} from "@tokio-overlays/shared/jar/page";
+import { Tally, type Gifting } from "@tokio-overlays/shared/jar/tally";
+import type { Point } from "@tokio-overlays/shared/jar/types";
+import {
+  find,
+  hours,
+  randomInt,
+  setPicture,
+} from "@tokio-overlays/shared/util";
 import {
   tokio,
   TOKIO_EVENTS,
   type ConfigData,
   type GiftData,
-  type UserData,
 } from "@tokioapp/overlay";
-import { GIFT_BOX, SAMPLE_GIFTS } from "./gifts";
-import { COIN, CROWN, PLACEHOLDER, STAR } from "./icons";
-import { Jar } from "./jar";
+import { CROWN, STAR } from "./icons";
 import {
+  BOTTOM,
   DEFAULT_JAR,
   JARS,
   loadDesign,
   loadLayer,
-  placement,
-  STAGE,
   type JarPictures,
-  type Point,
-  type RGB,
 } from "./jars";
-import { Tally, type Gifting } from "./tally";
 import "./style.css";
 
 type Side = "left" | "right";
@@ -71,20 +81,6 @@ const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 // with .tag in style.css.
 const TAG_REST = -6;
 
-const SAMPLE_USERS: UserData[] = [
-  "Sunny Fox",
-  "Pixel Panda",
-  "Lucky Tiger",
-  "Cosmic Owl",
-  "Happy Koala",
-  "Neon Wolf",
-].map((name, i) => ({
-  username: name,
-  handle: `@${name.toLowerCase().replace(" ", "_")}`,
-  // Placeholders show instead when offline.
-  profilePictures: [`https://picsum.photos/seed/tokio${i + 1}/200/200`],
-}));
-
 let jarId = DEFAULT_JAR;
 let accent = "#f43f5e";
 let maxGifts = 150;
@@ -104,10 +100,12 @@ let design = await loadDesign(JARS[jarId]);
 let [backLayer, frontLayer] = await loadLayers(design);
 // The jar on the stage, or the one loading to replace it.
 let shownJar = jarId;
-const jar = new Jar(canvas, spill, design, { maxGifts, giftSize });
+const jar = new Jar(canvas, spill, design, { maxGifts, giftSize }, BOTTOM);
 jar.setOverflow(overflow);
 // Kept across reloads, since streaming apps reload overlays when scenes change.
-let tally = demo ? new Tally(resetMs, dropLimit()) : load();
+let tally = demo
+  ? new Tally(resetMs, dropLimit())
+  : loadTally(storageKey, resetMs, dropLimit());
 jar.onRemove = (drop) => {
   tally.forget(drop);
   scheduleSave();
@@ -135,7 +133,7 @@ jar.settle(tally.drops);
 jar.start();
 renderTotal();
 renderTag();
-let stopSample = demo ? playSample() : undefined;
+let stopSample = demo ? playSample(handleGift) : undefined;
 
 // Sent when the streamer saves the overlay's settings.
 tokio.on(TOKIO_EVENTS.CONFIG, (config) => {
@@ -271,7 +269,7 @@ function showEdges() {
 // Puts the jar in the middle of the stage, each bubble's tail on the jar, the tag's knot where its
 // bow is, and the total under where it stands.
 function placeDesign() {
-  const box = placement(design, stageWidth);
+  const box = placement(design, stageWidth, BOTTOM);
   const ground = Math.max(...design.outside.map((p) => p.y));
   const root = document.documentElement.style;
   root.setProperty("--stage-width", `${stageWidth}px`);
@@ -304,25 +302,6 @@ function showColors() {
   }
   backLayer.paint(main);
   frontLayer.paint(main);
-}
-
-// "#rrggbb", or "#rrggbbaa" with its alpha ignored.
-function parseColor(color: string): RGB | null {
-  const match = /^#?([0-9a-f]{6})([0-9a-f]{2})?$/i.exec(color.trim());
-  if (!match) return null;
-  const value = parseInt(match[1], 16);
-  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
-}
-
-function mix(a: RGB, b: RGB, amount: number): RGB {
-  const at = (i: 0 | 1 | 2) => Math.round(a[i] + (b[i] - a[i]) * amount);
-  return [at(0), at(1), at(2)];
-}
-
-function css([r, g, b]: RGB, alpha?: number): string {
-  return alpha === undefined
-    ? `rgb(${r}, ${g}, ${b})`
-    : `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // Scales the stage to the page's height, at its bottom, and makes it as wide as the page, so the
@@ -492,21 +471,6 @@ function renderTotal() {
   totalCoins.textContent = tally.total.toLocaleString();
 }
 
-// The placeholder stays under the picture, so it shows while the picture loads or if it fails.
-function setPicture(photo: HTMLElement, url: string) {
-  photo.innerHTML = PLACEHOLDER;
-  if (!url) return;
-
-  const img = new Image();
-  img.alt = "";
-  img.decoding = "async";
-  // TikTok's image servers can refuse requests that name another site.
-  img.referrerPolicy = "no-referrer";
-  img.addEventListener("error", () => img.remove(), { once: true });
-  img.src = url;
-  photo.append(img);
-}
-
 function scheduleSave() {
   if (demo || saveTimer) return;
   saveTimer = setTimeout(save, 1000);
@@ -515,32 +479,12 @@ function scheduleSave() {
 function save() {
   clearTimeout(saveTimer);
   saveTimer = undefined;
-  try {
-    localStorage.setItem(storageKey, tally.serialize());
-  } catch {
-    // Storage can be full or turned off. The jar still works, it just won't survive a reload.
-  }
-}
-
-function load(): Tally {
-  try {
-    return Tally.restore(
-      localStorage.getItem(storageKey),
-      resetMs,
-      dropLimit(),
-    );
-  } catch {
-    return new Tally(resetMs, dropLimit());
-  }
+  saveTally(storageKey, tally);
 }
 
 // The most gifts the tally keeps. With overflow, the jar picks which gifts go and tells it.
 function dropLimit() {
   return overflow ? Infinity : maxGifts;
-}
-
-function find<T extends HTMLElement>(id: string, type: new () => T): T {
-  return within(document, `#${id}`, type);
 }
 
 function within<T extends Element>(
@@ -551,60 +495,4 @@ function within<T extends Element>(
   const el = root.querySelector(selector);
   if (!(el instanceof type)) throw new Error(`${selector} is missing.`);
   return el;
-}
-
-function hours(value: number) {
-  return value * 60 * 60 * 1000;
-}
-
-// Sample gifters send a combo of a sample gift, one event for each gift as on a LIVE,
-// then wait 1 to 3 seconds. Returns a function that stops it.
-function playSample() {
-  let timer: ReturnType<typeof setTimeout>;
-
-  const combo = () => {
-    const user = SAMPLE_USERS[randomInt(0, SAMPLE_USERS.length - 1)];
-    const gift = pickGift();
-    const size = randomInt(1, gift.maxCombo);
-    let count = 0;
-
-    const next = () => {
-      count++;
-      handleGift({
-        user,
-        gift: {
-          id: gift.id,
-          name: gift.name,
-          coins: gift.coins,
-          type: 1,
-          comboCount: count,
-          repeatEnd: count === size,
-          image: gift.image,
-        },
-      });
-      timer =
-        count < size
-          ? setTimeout(next, 250)
-          : setTimeout(combo, randomInt(1000, 3000));
-    };
-    next();
-  };
-
-  timer = setTimeout(combo, 400);
-  return () => clearTimeout(timer);
-}
-
-// A sample gift, the likelier the heavier its weight.
-function pickGift() {
-  let left =
-    Math.random() * SAMPLE_GIFTS.reduce((sum, gift) => sum + gift.weight, 0);
-  for (const gift of SAMPLE_GIFTS) {
-    left -= gift.weight;
-    if (left < 0) return gift;
-  }
-  return SAMPLE_GIFTS[0];
-}
-
-function randomInt(min: number, max: number) {
-  return min + Math.floor(Math.random() * (max - min + 1));
 }

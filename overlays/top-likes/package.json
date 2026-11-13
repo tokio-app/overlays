@@ -11,6 +11,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@tokio-overlays/shared": "*",
     "@tokioapp/overlay": "^1.0.1"
   },
   "devDependencies": {

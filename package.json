@@ -19,14 +19,15 @@
   },
   "packageManager": "yarn@1.22.22",
   "workspaces": [
-    "overlays/*"
+    "overlays/*",
+    "packages/*"
   ],
   "scripts": {
     "new": "node scripts/new.js",
     "delete": "node scripts/delete.js",
     "dev": "node scripts/dev.js",
     "build": "node scripts/build.js",
-    "typecheck": "tsc -p . && node scripts/workspaces.js typecheck",
+    "typecheck": "tsc -p . && tsc -p packages/shared && node scripts/workspaces.js typecheck",
     "lint": "oxlint --type-aware",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

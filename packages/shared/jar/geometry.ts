@@ -1,5 +1,5 @@
-// Geometry the vessels share: curves, paths, areas, and the physics walls around an inside or a
-// whole body. The helpers are gift-jar's (src/jars/profile.ts), unchanged.
+// Geometry the jars share: curves, paths, areas, and the physics walls around an inside or a whole
+// body.
 import type { Point, Wall } from "./types";
 
 export interface Ellipse {
@@ -157,7 +157,7 @@ export function glassWalls(outline: Point[], outside: Point[]): Wall[] {
 
 // Fewer points on a line, each kept segment within half a unit of the points it skips, so the
 // physics has fewer walls to check.
-function simplify(points: Point[]): Point[] {
+export function simplify(points: Point[]): Point[] {
   const kept = [points[0]];
   let from = 0;
   while (from < points.length - 1) {

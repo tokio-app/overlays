@@ -9,10 +9,9 @@ import {
   num,
   pathOf,
   range,
-  wallStrips,
   type Ellipse,
-  type Surface,
-} from "./profile";
+} from "@tokio-overlays/shared/jar/geometry";
+import { wallStrips, type Surface } from "./profile";
 import {
   arc,
   bandFront,
@@ -29,7 +28,8 @@ import {
   stop,
   tint,
 } from "./render";
-import type { JarDesign, Lens, Point, Strip } from "./types";
+import type { Lens, Point, Strip } from "@tokio-overlays/shared/jar/types";
+import type { JarDesign } from "./types";
 
 const WIDTH = 380;
 const HEIGHT = 402;

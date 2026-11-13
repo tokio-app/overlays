@@ -1,10 +1,13 @@
+import { HEART, medal } from "@tokio-overlays/shared/icons";
+import { SAMPLE_USERS } from "@tokio-overlays/shared/samples";
+import { hours, randomInt, setPicture } from "@tokio-overlays/shared/util";
 import {
   tokio,
   TOKIO_EVENTS,
   type ConfigData,
   type UserData,
 } from "@tokioapp/overlay";
-import { CROWN, HEART, medal, PLACEHOLDER } from "./icons";
+import { CROWN } from "./icons";
 import { Ranking, type Viewer } from "./ranking";
 import "./style.css";
 
@@ -36,22 +39,6 @@ const preview = window.name === `TOKIO_APP-${overlayId}`;
 const demo = preview || params.has("demo");
 const storageKey = `top-likes:${overlayId}`;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
-
-const SAMPLE_USERS: UserData[] = [
-  "Sunny Fox",
-  "Pixel Panda",
-  "Lucky Tiger",
-  "Cosmic Owl",
-  "Happy Koala",
-  "Neon Wolf",
-  "Chill Otter",
-  "Brave Lynx",
-].map((name, i) => ({
-  username: name,
-  handle: `@${name.toLowerCase().replace(" ", "_")}`,
-  // Placeholders show instead when offline.
-  profilePictures: [`https://picsum.photos/seed/tokio${i + 1}/200/200`],
-}));
 
 let maxUsers = 3;
 let resetMs = hours(6);
@@ -232,21 +219,6 @@ function updateRow(row: Row, viewer: Viewer, position: number) {
   }
 }
 
-// The placeholder stays under the picture, so it shows while the picture loads or if it fails.
-function setPicture(photo: HTMLDivElement, url: string) {
-  photo.innerHTML = PLACEHOLDER;
-  if (!url) return;
-
-  const img = new Image();
-  img.alt = "";
-  img.decoding = "async";
-  // TikTok's image servers can refuse requests that name another site.
-  img.referrerPolicy = "no-referrer";
-  img.addEventListener("error", () => img.remove(), { once: true });
-  img.src = url;
-  photo.append(img);
-}
-
 // Slides rows from where they were to where they are now, and fades new ones in.
 function animateMoves(before: Map<string, number>) {
   for (const [handle, row] of rows) {
@@ -283,10 +255,6 @@ function load(): string | null {
   } catch {
     return null;
   }
-}
-
-function hours(value: number) {
-  return value * 60 * 60 * 1000;
 }
 
 // The sample viewers start 9 likes apart, so they soon trade places.
@@ -333,8 +301,4 @@ function challenger() {
   const top = ranking.top(maxUsers + 1);
   const viewer = top[randomInt(1, top.length - 1)];
   return SAMPLE_USERS.find((user) => user.handle === viewer?.handle);
-}
-
-function randomInt(min: number, max: number) {
-  return min + Math.floor(Math.random() * (max - min + 1));
 }

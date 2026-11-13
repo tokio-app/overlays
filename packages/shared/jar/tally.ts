@@ -1,4 +1,5 @@
 import type { GiftData, UserData } from "@tokioapp/overlay";
+import { Streaks } from "../streaks";
 
 export interface Gifter {
   handle: string;
@@ -33,34 +34,15 @@ export interface Gifting {
 const SAVED_GIFTERS = 500;
 // The slider's top value.
 const SAVED_DROPS = 1000;
-// A lower count this soon after a streak's last event is a late update, not a new streak.
-// Updates can arrive out of order within a batch, and TikTok closes a combo 3 to 4 s after its
-// last one, so a new combo comes later than this.
-const LATE_MS = 2000;
-
-interface Streak {
-  /** The last count TikTok sent. */
-  last: number;
-  /** The gifts counted so far: more than `last` when the same count came again. */
-  total: number;
-  /** When the last event that counted came. */
-  at: number;
-}
 
 /**
- * The jar's contents and the coins sent, added up from GIFT events.
- *
- * TikTok sends a combo as a run of events whose `comboCount` grows, and a last one with
- * `repeatEnd` set. A gift that isn't a combo has `repeatEnd` set at once. So each event adds
- * the count's growth since the combo's last one, and the closing event adds nothing. The same
- * count again before the close is the gift sent again, as TikTok sends a gift sent one at a
- * time. A lower count is an update that arrived late, unless the combo went quiet for LATE_MS:
- * then a new combo started. Every gift sent drops.
+ * The jar's contents and the coins sent, added up from GIFT events. Streaks counts the gifts
+ * each event adds to its combo, and every gift sent drops.
  */
 export class Tally {
   private _gifters = new Map<string, Gifter>();
   private _drops: Drop[] = [];
-  private _streaks = new Map<string, Streak>();
+  private _streaks = new Streaks();
   private _total = 0;
   private _updatedAt = 0;
 
@@ -114,18 +96,12 @@ export class Tally {
 
     const handle = user.handle || user.username;
     const key = `${handle}:${gift.id}`;
-    const count = Math.max(1, gift.comboCount);
-    const streak = this._streaks.get(key);
-
-    // A new streak, unless this one goes on: a count that grows adds the growth, the same count
-    // again is the gift sent again unless it closes the combo, and a lower one is a late update.
-    let added = count;
-    let total = count;
-    if (streak && (count >= streak.last || now - streak.at < LATE_MS)) {
-      if (count > streak.last) added = count - streak.last;
-      else if (count < streak.last || gift.repeatEnd) added = 0;
-      total = streak.total + added;
-    }
+    const { added, total } = this._streaks.add(
+      key,
+      gift.comboCount,
+      gift.repeatEnd,
+      now,
+    );
 
     const unit = Math.max(0, gift.coins);
     const drops: Drop[] = Array.from({ length: added }, () => ({
@@ -133,11 +109,6 @@ export class Tally {
       giftId: gift.id,
       coins: unit,
     }));
-    if (gift.repeatEnd) {
-      this._streaks.delete(key);
-    } else if (added > 0) {
-      this._streaks.set(key, { last: count, total, at: now });
-    }
     if (!handle || added === 0) return null;
 
     this._total += unit * added;

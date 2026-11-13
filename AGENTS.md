@@ -13,7 +13,7 @@ yarn new <id> ["Name"]  # copy overlays/_template to overlays/<id>
 yarn delete <id>        # delete overlays/<id> and update yarn.lock (--force for uncommitted changes)
 yarn dev <id>           # the overlay's dev server
 yarn build [id...]      # build overlays into dist/ and check them like Tokio's import
-yarn typecheck          # tsc for scripts/ and every overlay with a typecheck script
+yarn typecheck          # tsc for scripts/, packages/shared and every overlay with a typecheck script
 yarn lint               # oxlint --type-aware
 yarn format             # prettier --write .
 yarn release:build      # build everything and prepare release/ (see Releases)
@@ -33,6 +33,7 @@ Verify changes with `yarn format:check`, `yarn lint`, `yarn typecheck` and `yarn
 | ------------------------------- | ------------------------------------------------------------------------------ |
 | `overlays/<id>/`                | One overlay, a workspace named `@tokio-overlays/<id>`                          |
 | `overlays/_template/`           | What `yarn new` copies. Built and checked like an overlay, never released      |
+| `packages/shared/`              | `@tokio-overlays/shared`, the code two or more overlays use (see Shared code)  |
 | `scripts/lib/schema.js`         | Copy of Tokio's overlay schemas and setup block regex                          |
 | `scripts/lib/validate.js`       | The checks on a built `dist/`                                                  |
 | `scripts/lib/build.js`          | Runs an overlay's `build`, copies its YAML files into `dist/`, validates       |
@@ -58,17 +59,30 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 - Connect with `window.__OVERLAY_ID__ || new URLSearchParams(location.search).get("id")`, as the template does, so dev and imported builds work without edits.
 - Overlays use `@tokioapp/overlay` (`../tokio-event-loader`, MIT) from npm, bundled into the build. Don't load it from a CDN, so overlays work offline and pin the version they were tested with.
 - Read config values defensively (`typeof config.title === "string"`): `ConfigData` values can be strings, numbers, booleans, gifts or a table's rows (objects of cells keyed by column id).
-- Each overlay stands alone; code two overlays share is copied, since a release only diffs an overlay's own folder. `magic-jar` is `gift-jar` with drawn jars: its `src/jar.ts`, `tally.ts`, `gifts.ts`, `icons.ts` and the helpers in `src/jars/geometry.ts` are the same code as gift-jar's (`jar.ts` byte for byte). `glow-jar` has the same `tally.ts`, `gifts.ts` and physics helpers (`src/jars/geometry.ts`), and gift-jar's `jar.ts` without the lenses. `last-gift`'s `src/streaks.ts` counts a gift's combo by the same rules as `tally.ts`. `biggest-gift` is `last-gift` with another rule for which gift the card shows (`handleGift` and the demo in `src/main.ts`); the rest is the same code. `now-playing`'s `entrance()` and `leaving()` (`src/main.ts`) are `fan-level`'s, with the wipe's corners following its layout. Put a fix to them in every copy and bump each version.
 - `glow-jar`'s jars are pictures, so each frame works out only the gifts. `src/jars/<id>/` holds `back.png` and `front.png`, behind and over the gifts' canvas, and `walls.png`, the glass painted solid and open across the mouth, all the same size at twice the stage's scale. `src/jars/trace.ts` reads `walls.png` once at load into the edges the gifts collide with; each row may cross the glass once on each side. It's imported `?inline`, so its pixels can be read in Tokio's previews, which load from `local-resource:`. `back-tint.png` and `front-tint.png` hold how much of each pixel the jar's own `color` made, and `src/jars/tint.ts` repaints the layers in the main color at load and when it changes; it loads them with CORS, which Tokio's previews allow. The jar's `index.ts` holds its size, color and sparkles (drawn in code, behind the gifts), where the tag and bubbles attach and what the tag's cord is (a ribbon or a rope), and `?edges` draws the traced edges over the pictures. The gifts drop through the narrowest opening above the jar's `bodyTop`, so a flared rim like the crystal bowl's sizes them by its neck. The `jar` setting picks one of `JARS` (`src/jars/index.ts`), or `?jar=<id>` while developing: a new jar is a folder, an entry there and an option in `config.yaml`.
+
+## Shared code
+
+- Code two or more overlays use lives in `packages/shared`, the workspace `@tokio-overlays/shared`. Code only one overlay uses stays in its folder.
+- An overlay lists `"@tokio-overlays/shared": "*"` first in its `dependencies` and imports files by path: `@tokio-overlays/shared/streaks`, `@tokio-overlays/shared/card/style.css`. Inside the package, files import each other relatively.
+- It's TypeScript and CSS with no build of its own: each overlay's build bundles what it imports. Vite leaves it out of `THIRD_PARTY_LICENSES.md`, which lists only `node_modules`.
+- Its `package.json` says only its CSS has side effects, so a build drops the modules it doesn't use. A module's top level only declares things: work a value out in the function that uses it, as `medal()` does its rosette, or every overlay importing the module bundles the work.
+- What it holds:
+  - At its root: the settings readers, colors, icons, the sample viewers and gifts' type, `Streaks` (what a gift event adds to its sender's combo) and small helpers (`util.ts`).
+  - `entrances.ts`: how fan-level's banner and now-playing's card come in and leave. Each passes its own wipe radius. `ENTRANCES` must match the entrance options in both `config.yaml` files.
+  - `card/`: the card last-gift and biggest-gift run, `startCard({ id, title, rule })`. The rule, `"last"` or `"biggest"`, decides which gift takes the card, whether a hidden card comes back when its gift is sent again, and the demo. The card's markup stays in each overlay's `index.html`, the same in both, and its defaults (`card/config.ts`) must match both `config.yaml` files.
+  - `jar/`: the jars' physics engine (`Jar`, which bends the gifts behind the glass only for a design with `lenses`), the tally, gift pictures, geometry and shapes, and the app gift-jar and magic-jar run (`startJarApp`, given their jars and colors). glow-jar keeps its own page and uses the rest. Each overlay keeps its jar designs in `src/jars/`.
+- Shared code gets what differs between overlays as arguments: a rule, a radius, the jars, the colors. Saved state stays under each overlay's own key (`<overlay id>:<overlayId>`).
+- A change to shared code changes every overlay that bundles it. Check each one, and bump the ones `yarn release:build` warns about.
 
 ## Releases
 
 - One `v<version>` tag (root `package.json`) publishes one release. It attaches only the overlays that are new or whose `info.yaml` version changed since the latest published release. Every release carries the full `overlays.json`, which points each overlay at the release holding its current zip.
-- **To ship a change to an overlay, bump its version** in `info.yaml` and `package.json`. `release:build` warns when an overlay changed since its release without a bump; the change won't ship.
+- **To ship a change to an overlay, bump its version** in `info.yaml` and `package.json`. `release:build` warns when an overlay's build or `preview.png` changed since its release without a bump, including through `packages/shared` or a dependency; the change won't ship.
 - **Bump the first number only for a breaking change**, one the PR template's box describes (streamers have to set the overlay up again). Tokio installs every other new version in the background and asks the streamer before this one (`catalogState` in Tokio's `src/common/util/catalog.ts`). Feat bumps the minor, fix the patch.
 - **Never delete or replace old releases or their assets.** The catalog links to them.
 - The base catalog is `https://github.com/tokio-app/overlays/releases/latest/download/overlays.json`. That URL needs no API call and has no rate limit. Prereleases (`-` in the version) are marked as such, so `latest` skips them.
-- An entry is reused when the base has the same version from another release. A rerun of a release whose catalog is already published rebuilds what that release holds. Zips use a fixed date and sorted entries, so the same files give the same sha256.
+- An entry is reused when the base has the same version from another release. A rerun of a release whose catalog is already published rebuilds what that release holds. Zips use a fixed date and sorted entries, so the same files give the same sha256, on Windows and Linux alike. `release:build` compares an unchanged version's zip with the catalog's hash to tell its build changed, so upgrading fflate or changing the zip options makes every overlay look changed.
 - `--release` (the workflow) fails when nothing changed or the base can't be read. Without it, both are only logged, so CI passes with no overlays.
 - GitHub allows 1,000 assets per release (a zip and a preview per overlay). `release:build` fails above that; release fewer overlays per tag.
 - Asset names are fixed: `<id>.zip`, `<id>.png`, `overlays.json`. Tokio and the website depend on them and on the catalog's fields.
@@ -95,5 +109,5 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 ## Conventions
 
 - Prettier (2 spaces, double quotes, semicolons, trailing commas) and oxlint `--type-aware`, run by lint-staged at commit. Fix lint warnings in code you touch; use type guards instead of casts on `unknown`.
-- Commits follow [Conventional Commits](https://www.conventionalcommits.org/), scoped to the overlay they change (`feat(gift-goal): ...`), enforced by commitlint in a husky hook. Don't bypass hooks.
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org/), scoped to the overlay they change (`feat(gift-goal): ...`) or `shared` for `packages/shared`, enforced by commitlint in a husky hook. Don't bypass hooks.
 - Scripts are JS with JSDoc so they run without a build step; `yarn typecheck` checks them with `tsc` (`checkJs`). Spawn yarn through `yarn()` in `scripts/lib/overlays.js` so it works on Windows.

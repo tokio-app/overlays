@@ -1,6 +1,6 @@
+import { HEART } from "@tokio-overlays/shared/icons";
 import { tokio, TOKIO_EVENTS } from "@tokioapp/overlay";
 import { DEFAULTS, readSettings, type Account, type Settings } from "./config";
-import { HEART } from "./icons";
 import { platformOf } from "./platforms";
 import "./style.css";
 

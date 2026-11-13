@@ -1,5 +1,6 @@
 // A mason jar: a rounded lip, a threaded neck, a sloped shoulder and a thick bottom.
-import { cubic, Round } from "./profile";
+import { cubic } from "@tokio-overlays/shared/jar/geometry";
+import { Round } from "./profile";
 import { heel, helix, rim, roundJar, threads } from "./render";
 
 const jar = new Round({

@@ -1,5 +1,14 @@
 // Reads the overlay's settings. The published SDK has no type for a table's rows, so everything
 // comes in as unknown, and a bad value keeps the previous one.
+import {
+  ALIGNS,
+  boolean,
+  color,
+  FONT_MAX_LENGTH,
+  number,
+  oneOf,
+} from "@tokio-overlays/shared/settings";
+import { isRecord } from "@tokio-overlays/shared/util";
 
 export interface Account {
   platform: string;
@@ -12,7 +21,6 @@ const LAYOUTS = ["one", "all"] as const;
 const VISIBILITIES = ["always", "interval", "command"] as const;
 const TRANSITIONS = ["flip", "slide", "fade"] as const;
 const TEXTS = ["username", "platform", "both"] as const;
-const ALIGNS = ["left", "center", "right"] as const;
 
 export interface Settings {
   accounts: Account[];
@@ -61,32 +69,8 @@ export const DEFAULTS: Settings = {
   textColor: PAPER,
 };
 
-// The font setting's limit.
-const FONT_MAX_LENGTH = 60;
-const HEX = /^#[0-9a-f]{6}([0-9a-f]{2})?$/i;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function oneOf<T extends string>(
-  value: unknown,
-  options: readonly T[],
-  fallback: T,
-): T {
-  return options.find((option) => option === value) ?? fallback;
-}
-
-function number(value: unknown, min: number, fallback: number) {
-  return typeof value === "number" && value >= min ? value : fallback;
-}
-
 function string(value: unknown, fallback: string) {
   return typeof value === "string" ? value : fallback;
-}
-
-function color(value: unknown, fallback: string) {
-  return typeof value === "string" && HEX.test(value) ? value : fallback;
 }
 
 function readAccounts(value: unknown, fallback: Account[]): Account[] {
@@ -119,10 +103,7 @@ export function readSettings(
     command: string(config.command, previous.command),
     transition: oneOf(config.transition, TRANSITIONS, previous.transition),
     text: oneOf(config.text, TEXTS, previous.text),
-    showButton:
-      typeof config.show_button === "boolean"
-        ? config.show_button
-        : previous.showButton,
+    showButton: boolean(config.show_button, previous.showButton),
     buttonText: string(config.button_text, previous.buttonText),
     font: font.length <= FONT_MAX_LENGTH ? font : previous.font,
     size: number(config.size, 1, previous.size),

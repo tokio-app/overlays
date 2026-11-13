@@ -1,6 +1,7 @@
 // A tip jar: a straight cylinder with a rolled lip and a very heavy bottom, pushed up from below
 // into a dome (the punt).
-import { cubic, num, Round } from "./profile";
+import { cubic, num } from "@tokio-overlays/shared/jar/geometry";
+import { Round } from "./profile";
 import { arc, blur, heel, line, rim, roundJar, shape, stop } from "./render";
 
 const jar = new Round({
