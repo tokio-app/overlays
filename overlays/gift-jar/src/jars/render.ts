@@ -8,10 +8,10 @@ import {
   pathOf,
   range,
   type Ellipse,
-  type Round,
-  type Surface,
-} from "./profile";
-import type { JarDesign, Point } from "./types";
+} from "@tokio-overlays/shared/jar/geometry";
+import { type Round, type Surface } from "./profile";
+import type { Point } from "@tokio-overlays/shared/jar/types";
+import type { JarDesign } from "./types";
 
 const TONES = {
   white: "#fff",

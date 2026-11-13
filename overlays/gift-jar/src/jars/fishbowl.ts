@@ -1,6 +1,7 @@
 // A fishbowl: a glass sphere cut flat at the bottom, with a wide rolled rim at the top. The
 // fill limit only counts the bowl below its middle, so the gifts never reach the overhang.
-import { pathOf, range, Round } from "./profile";
+import { pathOf, range } from "@tokio-overlays/shared/jar/geometry";
+import { Round } from "./profile";
 import { blur, line, rim, ringArc, roundJar } from "./render";
 
 // The sphere's center and radius, outside and inside.

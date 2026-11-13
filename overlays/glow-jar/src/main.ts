@@ -1,12 +1,20 @@
+import { css, mix, parseColor } from "@tokio-overlays/shared/color";
+import { SAMPLE_USERS } from "@tokio-overlays/shared/samples";
+import {
+  find,
+  hours,
+  pickWeighted,
+  randomInt,
+} from "@tokio-overlays/shared/util";
 import {
   tokio,
   TOKIO_EVENTS,
   type ConfigData,
   type GiftData,
-  type UserData,
 } from "@tokioapp/overlay";
-import { GIFT_BOX, SAMPLE_GIFTS } from "./gifts";
-import { COIN, CROWN, PLACEHOLDER, STAR } from "./icons";
+import { GIFT_BOX, SAMPLE_GIFTS } from "@tokio-overlays/shared/jar/gifts";
+import { COIN, PLACEHOLDER } from "@tokio-overlays/shared/icons";
+import { CROWN, STAR } from "./icons";
 import { Jar } from "./jar";
 import {
   DEFAULT_JAR,
@@ -17,9 +25,8 @@ import {
   STAGE,
   type JarPictures,
   type Point,
-  type RGB,
 } from "./jars";
-import { Tally, type Gifting } from "./tally";
+import { Tally, type Gifting } from "@tokio-overlays/shared/jar/tally";
 import "./style.css";
 
 type Side = "left" | "right";
@@ -71,19 +78,8 @@ const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 // with .tag in style.css.
 const TAG_REST = -6;
 
-const SAMPLE_USERS: UserData[] = [
-  "Sunny Fox",
-  "Pixel Panda",
-  "Lucky Tiger",
-  "Cosmic Owl",
-  "Happy Koala",
-  "Neon Wolf",
-].map((name, i) => ({
-  username: name,
-  handle: `@${name.toLowerCase().replace(" ", "_")}`,
-  // Placeholders show instead when offline.
-  profilePictures: [`https://picsum.photos/seed/tokio${i + 1}/200/200`],
-}));
+// The demo's gifters: the first six sample viewers.
+const SAMPLE_GIFTERS = SAMPLE_USERS.slice(0, 6);
 
 let jarId = DEFAULT_JAR;
 let accent = "#f43f5e";
@@ -306,25 +302,6 @@ function showColors() {
   frontLayer.paint(main);
 }
 
-// "#rrggbb", or "#rrggbbaa" with its alpha ignored.
-function parseColor(color: string): RGB | null {
-  const match = /^#?([0-9a-f]{6})([0-9a-f]{2})?$/i.exec(color.trim());
-  if (!match) return null;
-  const value = parseInt(match[1], 16);
-  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
-}
-
-function mix(a: RGB, b: RGB, amount: number): RGB {
-  const at = (i: 0 | 1 | 2) => Math.round(a[i] + (b[i] - a[i]) * amount);
-  return [at(0), at(1), at(2)];
-}
-
-function css([r, g, b]: RGB, alpha?: number): string {
-  return alpha === undefined
-    ? `rgb(${r}, ${g}, ${b})`
-    : `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 // Scales the stage to the page's height, at its bottom, and makes it as wide as the page, so the
 // jar stands in the middle and spilled gifts reach the page's edges. A narrow page gets the
 // stage's least width, scaled down to fit.
@@ -539,10 +516,6 @@ function dropLimit() {
   return overflow ? Infinity : maxGifts;
 }
 
-function find<T extends HTMLElement>(id: string, type: new () => T): T {
-  return within(document, `#${id}`, type);
-}
-
 function within<T extends Element>(
   root: ParentNode,
   selector: string,
@@ -553,18 +526,14 @@ function within<T extends Element>(
   return el;
 }
 
-function hours(value: number) {
-  return value * 60 * 60 * 1000;
-}
-
 // Sample gifters send a combo of a sample gift, one event for each gift as on a LIVE,
 // then wait 1 to 3 seconds. Returns a function that stops it.
 function playSample() {
   let timer: ReturnType<typeof setTimeout>;
 
   const combo = () => {
-    const user = SAMPLE_USERS[randomInt(0, SAMPLE_USERS.length - 1)];
-    const gift = pickGift();
+    const user = SAMPLE_GIFTERS[randomInt(0, SAMPLE_GIFTERS.length - 1)];
+    const gift = pickWeighted(SAMPLE_GIFTS);
     const size = randomInt(1, gift.maxCombo);
     let count = 0;
 
@@ -592,19 +561,4 @@ function playSample() {
 
   timer = setTimeout(combo, 400);
   return () => clearTimeout(timer);
-}
-
-// A sample gift, the likelier the heavier its weight.
-function pickGift() {
-  let left =
-    Math.random() * SAMPLE_GIFTS.reduce((sum, gift) => sum + gift.weight, 0);
-  for (const gift of SAMPLE_GIFTS) {
-    left -= gift.weight;
-    if (left < 0) return gift;
-  }
-  return SAMPLE_GIFTS[0];
-}
-
-function randomInt(min: number, max: number) {
-  return min + Math.floor(Math.random() * (max - min + 1));
 }

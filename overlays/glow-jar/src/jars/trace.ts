@@ -1,6 +1,7 @@
 // Reads a jar's walls picture into the edges its gifts collide with, once, when the overlay loads.
-import { areaBelow, simplify } from "./geometry";
-import type { JarDesign, JarPictures, Point } from "./types";
+import { areaBelow, simplify } from "@tokio-overlays/shared/jar/geometry";
+import type { Point } from "@tokio-overlays/shared/jar/types";
+import type { JarDesign, JarPictures } from "./types";
 
 /**
  * The jar with its edges. Each row of the walls picture crosses the glass on both sides: where

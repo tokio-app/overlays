@@ -1,5 +1,10 @@
 import { Bodies, Body, Composite, Engine, Sleeping } from "matter-js";
-import { GIFT_BOX, isSettled, loadGiftPicture, onGiftPicture } from "./gifts";
+import {
+  GIFT_BOX,
+  isSettled,
+  loadGiftPicture,
+  onGiftPicture,
+} from "@tokio-overlays/shared/jar/gifts";
 import {
   contains,
   glassWalls,
@@ -11,7 +16,7 @@ import {
   type Rect,
   type Strip,
 } from "./jars";
-import type { Drop } from "./tally";
+import type { Drop } from "@tokio-overlays/shared/jar/tally";
 
 export interface JarOptions {
   /** The most gifts in the jar. */

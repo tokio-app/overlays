@@ -2,10 +2,15 @@ import { bowl } from "./bowl";
 import { mason } from "./mason";
 import type { JarPictures } from "./types";
 
-export type { JarDesign, JarPictures, Point } from "./types";
-export { contains, glassWalls, walls } from "./geometry";
+export type { JarDesign, JarPictures } from "./types";
+export type { Point } from "@tokio-overlays/shared/jar/types";
+export {
+  contains,
+  glassWalls,
+  walls,
+} from "@tokio-overlays/shared/jar/geometry";
 export { loadDesign } from "./trace";
-export { loadLayer, type Layer, type RGB } from "./tint";
+export { loadLayer, type Layer } from "./tint";
 
 /**
  * The design stage, in px. Its height is fixed and its width is the page's, at least

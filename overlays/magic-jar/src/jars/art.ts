@@ -3,8 +3,15 @@
 // edges and a few white highlights. No blurs, so the layers paint quickly. The colors are CSS
 // variables main.ts sets from the jar's palette or the streamer's colors, so new colors don't
 // redraw anything.
-import { areaBelow, bubbleEdge, halfEllipse, num, pathOf } from "./geometry";
-import type { JarDesign, Point } from "./types";
+import {
+  areaBelow,
+  bubbleEdge,
+  halfEllipse,
+  num,
+  pathOf,
+} from "@tokio-overlays/shared/jar/geometry";
+import type { Point } from "@tokio-overlays/shared/jar/types";
+import type { JarDesign } from "./types";
 
 const TONES = {
   main: "var(--main)",

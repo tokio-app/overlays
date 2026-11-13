@@ -6,8 +6,13 @@ import { mason } from "./mason";
 import { tip } from "./tip";
 import type { JarDesign } from "./types";
 
-export type { JarDesign, Point, Rect, Strip } from "./types";
-export { contains, glassWalls, walls } from "./profile";
+export type { JarDesign } from "./types";
+export type { Point, Rect, Strip } from "@tokio-overlays/shared/jar/types";
+export {
+  contains,
+  glassWalls,
+  walls,
+} from "@tokio-overlays/shared/jar/geometry";
 
 /**
  * The design stage, in px. Its height is fixed and its width is the page's, at least

@@ -10,8 +10,8 @@ import {
   symmetric,
   vessel,
 } from "./art";
-import { cubic } from "./geometry";
-import type { Point } from "./types";
+import { cubic } from "@tokio-overlays/shared/jar/geometry";
+import type { Point } from "@tokio-overlays/shared/jar/types";
 
 const WIDTH = 380;
 const HEIGHT = 402;

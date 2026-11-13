@@ -1,6 +1,7 @@
 // A candy jar: a tall cylinder, a rounded shoulder into a wide, short neck with a thick flared
 // rim, standing on a short solid stem and a disc foot.
-import { cubic, num, pathOf, Round } from "./profile";
+import { cubic, num, pathOf } from "@tokio-overlays/shared/jar/geometry";
+import { Round } from "./profile";
 import {
   arc,
   bandFront,
