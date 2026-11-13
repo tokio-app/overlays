@@ -5,13 +5,16 @@ sections:
     id: ranking
   - name: Total likes
     id: total
+    translations: { es: Total de Me gusta }
   - name: Colors
     id: colors
+    translations: { es: Colores }
 fields:
   - name: Viewers shown
     id: max_users
     type: slider
     section: ranking
+    translations: { es: Espectadores que se muestran }
     attributes:
       min: 3
       max: 20
@@ -21,6 +24,7 @@ fields:
     id: show_crown
     type: toggle
     section: ranking
+    translations: { es: Corona en el primer lugar }
     attributes:
       value: true
       default: true
@@ -28,6 +32,7 @@ fields:
     id: reset_hours
     type: slider
     section: ranking
+    translations: { es: Horas sin Me gusta para empezar de nuevo }
     attributes:
       min: 1
       max: 24
@@ -37,6 +42,7 @@ fields:
     id: show_total
     type: toggle
     section: total
+    translations: { es: Mostrar el total de Me gusta del LIVE }
     attributes:
       value: true
       default: true
@@ -44,15 +50,19 @@ fields:
     id: total_label
     type: input
     section: total
+    when: { show_total: true }
+    translations: { es: Etiqueta }
     attributes:
       mode: text
       placeholder: likes
+      translations: { es: Me gusta }
       value: likes
       default: likes
   - name: Names
     id: name_color
     type: color
     section: colors
+    translations: { es: Nombres }
     attributes:
       value: 3b9ae1
       default: 3b9ae1
@@ -60,6 +70,7 @@ fields:
     id: count_color
     type: color
     section: colors
+    translations: { es: Me gusta y posiciones }
     attributes:
       value: e6e6e6
       default: e6e6e6
@@ -67,6 +78,7 @@ fields:
     id: heart_color
     type: color
     section: colors
+    translations: { es: Corazones }
     attributes:
       value: e8222b
       default: e8222b
