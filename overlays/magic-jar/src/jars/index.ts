@@ -24,7 +24,7 @@ export const JARS: readonly JarDesign[] = [
   piggy,
 ];
 
-export const DEFAULT_JAR = "moon";
+const DEFAULT_JAR = "moon";
 
 /** The jar with this id, or the default one for an unknown id. */
 export function jarById(id: unknown): JarDesign {

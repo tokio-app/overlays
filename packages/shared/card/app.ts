@@ -2,9 +2,16 @@
 // who sent it. Each overlay starts it with its own id, title and rule.
 import { tokio, TOKIO_EVENTS, type GiftData } from "@tokioapp/overlay";
 import { css, mix, parseColor, type RGB } from "../color";
-import { COIN, PLACEHOLDER } from "../icons";
+import { COIN } from "../icons";
 import { Streaks } from "../streaks";
-import { find, hours, isRecord, pickWeighted, randomInt } from "../util";
+import {
+  find,
+  hours,
+  isRecord,
+  pickWeighted,
+  randomInt,
+  setPicture,
+} from "../util";
 import { defaults, readSettings, type Settings } from "./config";
 import { SPARK } from "./icons";
 import { drawLight } from "./light";
@@ -766,20 +773,6 @@ function shorten(name: string) {
         .join("")
         .trimEnd()}…`
     : name;
-}
-
-// The placeholder stays under the picture, so it shows while the picture loads or if it fails.
-function setPicture(el: HTMLElement, url: string) {
-  el.innerHTML = PLACEHOLDER;
-  if (!url) return;
-  const img = new Image();
-  img.alt = "";
-  img.decoding = "async";
-  // TikTok's image servers can refuse requests that name another site.
-  img.referrerPolicy = "no-referrer";
-  img.addEventListener("error", () => img.remove(), { once: true });
-  img.src = url;
-  el.append(img);
 }
 
 // Loads a gift's picture before it comes in, for up to LOAD_MS.

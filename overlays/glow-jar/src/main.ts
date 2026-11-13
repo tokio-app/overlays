@@ -6,11 +6,15 @@ import {
   loadTally,
   playSample,
   saveTally,
-  setPicture,
 } from "@tokio-overlays/shared/jar/page";
 import { Tally, type Gifting } from "@tokio-overlays/shared/jar/tally";
 import type { Point } from "@tokio-overlays/shared/jar/types";
-import { find, hours, randomInt } from "@tokio-overlays/shared/util";
+import {
+  find,
+  hours,
+  randomInt,
+  setPicture,
+} from "@tokio-overlays/shared/util";
 import {
   tokio,
   TOKIO_EVENTS,

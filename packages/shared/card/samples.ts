@@ -1,16 +1,5 @@
 // The sample gifters and gifts of the demo, which Tokio's preview plays until the first gift.
-import { SAMPLE_USERS as USERS } from "../samples";
-
-export interface SampleGift {
-  id: string;
-  name: string;
-  coins: number;
-  image: string;
-  /** How often the demo picks it, against the others. */
-  weight: number;
-  /** The most gifts in one combo. */
-  maxCombo: number;
-}
+import { SAMPLE_USERS as USERS, type SampleGift } from "../samples";
 
 // Real gifts, as in the jars' demo. Their pictures load from TikTok's CDN, so offline the drawn
 // gift box shows instead.

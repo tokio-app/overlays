@@ -5,10 +5,10 @@ import {
   type GiftData,
 } from "@tokioapp/overlay";
 import { COIN, medal } from "../icons";
-import { find, hours } from "../util";
+import { find, hours, setPicture } from "../util";
 import { GIFT_BOX } from "./gifts";
 import { Jar, placement, STAGE } from "./jar";
-import { loadTally, playSample, saveTally, setPicture } from "./page";
+import { loadTally, playSample, saveTally } from "./page";
 import { Tally, type Gifting } from "./tally";
 import type { JarShape } from "./types";
 

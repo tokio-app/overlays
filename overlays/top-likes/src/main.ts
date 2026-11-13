@@ -1,6 +1,6 @@
-import { HEART, medal, PLACEHOLDER } from "@tokio-overlays/shared/icons";
+import { HEART, medal } from "@tokio-overlays/shared/icons";
 import { SAMPLE_USERS } from "@tokio-overlays/shared/samples";
-import { hours, randomInt } from "@tokio-overlays/shared/util";
+import { hours, randomInt, setPicture } from "@tokio-overlays/shared/util";
 import {
   tokio,
   TOKIO_EVENTS,
@@ -217,21 +217,6 @@ function updateRow(row: Row, viewer: Viewer, position: number) {
     row.likes = viewer.likes;
     row.count.textContent = viewer.likes.toLocaleString();
   }
-}
-
-// The placeholder stays under the picture, so it shows while the picture loads or if it fails.
-function setPicture(photo: HTMLDivElement, url: string) {
-  photo.innerHTML = PLACEHOLDER;
-  if (!url) return;
-
-  const img = new Image();
-  img.alt = "";
-  img.decoding = "async";
-  // TikTok's image servers can refuse requests that name another site.
-  img.referrerPolicy = "no-referrer";
-  img.addEventListener("error", () => img.remove(), { once: true });
-  img.src = url;
-  photo.append(img);
 }
 
 // Slides rows from where they were to where they are now, and fades new ones in.

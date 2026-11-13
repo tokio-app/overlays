@@ -18,7 +18,7 @@ export const JARS: readonly JarDesign[] = [
   heart,
 ];
 
-export const DEFAULT_JAR = "mason";
+const DEFAULT_JAR = "mason";
 
 /** The jar with this id, or the default one for an unknown id. */
 export function jarById(id: unknown): JarDesign {

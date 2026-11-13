@@ -1,3 +1,5 @@
+import { PLACEHOLDER } from "./icons";
+
 /** A whole number from `min` to `max`, both included. */
 export function randomInt(min: number, max: number) {
   return min + Math.floor(Math.random() * (max - min + 1));
@@ -31,4 +33,20 @@ export function find<T extends HTMLElement>(id: string, type: new () => T): T {
   const el = document.getElementById(id);
   if (!(el instanceof type)) throw new Error(`#${id} is missing.`);
   return el;
+}
+
+// A viewer's photo. The placeholder stays under the picture, so it shows while the picture loads
+// or if it fails.
+export function setPicture(photo: HTMLElement, url: string) {
+  photo.innerHTML = PLACEHOLDER;
+  if (!url) return;
+
+  const img = new Image();
+  img.alt = "";
+  img.decoding = "async";
+  // TikTok's image servers can refuse requests that name another site.
+  img.referrerPolicy = "no-referrer";
+  img.addEventListener("error", () => img.remove(), { once: true });
+  img.src = url;
+  photo.append(img);
 }

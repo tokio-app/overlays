@@ -1,5 +1,17 @@
 import type { UserData } from "@tokioapp/overlay";
 
+/** A gift a demo sends. */
+export interface SampleGift {
+  id: string;
+  name: string;
+  coins: number;
+  image: string;
+  /** How often the demo picks it, against the others. */
+  weight: number;
+  /** The most gifts in one combo. */
+  maxCombo: number;
+}
+
 // The viewers the demos and Tokio's previews show.
 export const SAMPLE_USERS: UserData[] = [
   "Sunny Fox",

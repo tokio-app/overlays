@@ -1,6 +1,5 @@
-// What the jar overlays' pages share: the saved jar, the gifters' photos and the demo's gifts.
+// What the jar overlays' pages share: the saved jar and the demo's gifts.
 import type { GiftData } from "@tokioapp/overlay";
-import { PLACEHOLDER } from "../icons";
 import { SAMPLE_USERS } from "../samples";
 import { pickWeighted, randomInt } from "../util";
 import { SAMPLE_GIFTS } from "./gifts";
@@ -24,21 +23,6 @@ export function saveTally(key: string, tally: Tally) {
   } catch {
     // Storage can be full or turned off. The jar still works, it just won't survive a reload.
   }
-}
-
-// The placeholder stays under the picture, so it shows while the picture loads or if it fails.
-export function setPicture(photo: HTMLElement, url: string) {
-  photo.innerHTML = PLACEHOLDER;
-  if (!url) return;
-
-  const img = new Image();
-  img.alt = "";
-  img.decoding = "async";
-  // TikTok's image servers can refuse requests that name another site.
-  img.referrerPolicy = "no-referrer";
-  img.addEventListener("error", () => img.remove(), { once: true });
-  img.src = url;
-  photo.append(img);
 }
 
 /**
