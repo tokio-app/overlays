@@ -148,7 +148,7 @@ try {
       // Same zip as before. Only fields that live in the catalog alone are refreshed.
       entries.push({ ...old, description });
       changes.unchanged.push(overlay.id);
-      const warning = unbumped(overlay, old);
+      const warning = await unbumped(overlay, old);
       if (warning) changes.warnings.push(warning);
       continue;
     }
@@ -257,7 +257,6 @@ async function loadBase(source) {
 
 /**
  * Zips a built overlay into release/assets, with its preview, and returns its catalog entry.
- * The files sit at the zip's root, so the extracted folder is the one Tokio imports.
  *
  * @param {Overlay} overlay
  * @param {OverlayInfo} info
@@ -265,15 +264,7 @@ async function loadBase(source) {
  * @returns {Promise<CatalogEntry>}
  */
 async function pack(overlay, info, description) {
-  /** @type {import("fflate").Zippable} */
-  const files = {};
-  for (const file of await listFiles(overlay.dist)) {
-    files[file] = [
-      await readFile(join(overlay.dist, file)),
-      { mtime: ZIP_DATE },
-    ];
-  }
-  const zip = zipSync(files, { level: 9 });
+  const zip = await zipDist(overlay);
   const file = `${overlay.id}.zip`;
   await writeFile(join(ASSETS_DIR, file), zip);
 
@@ -298,9 +289,33 @@ async function pack(overlay, info, description) {
     file,
     url: downloadURL(file),
     size: zip.length,
-    sha256: createHash("sha256").update(zip).digest("hex"),
+    sha256: sha256(zip),
     preview,
   };
+}
+
+/**
+ * A built overlay's zip. The files sit at its root, so the extracted folder is the one Tokio
+ * imports, and the same files always make the same bytes.
+ *
+ * @param {Overlay} overlay
+ * @returns {Promise<Uint8Array>}
+ */
+async function zipDist(overlay) {
+  /** @type {import("fflate").Zippable} */
+  const files = {};
+  for (const file of await listFiles(overlay.dist)) {
+    files[file] = [
+      await readFile(join(overlay.dist, file)),
+      { mtime: ZIP_DATE },
+    ];
+  }
+  return zipSync(files, { level: 9 });
+}
+
+/** @param {Uint8Array} data */
+function sha256(data) {
+  return createHash("sha256").update(data).digest("hex");
 }
 
 /**
@@ -321,26 +336,47 @@ async function listFiles(dir) {
 
 /**
  * A warning when an overlay changed since the release holding its zip but kept its version,
- * since it won't ship and Tokio couldn't tell it was updated.
+ * since it won't ship and Tokio couldn't tell it was updated. The same files make the same zip,
+ * so a new hash means its build changed, whether through its own code, packages/shared or a
+ * dependency.
  *
  * @param {Overlay} overlay
  * @param {CatalogEntry} entry
- * @returns {string | null}
+ * @returns {Promise<string | null>}
  */
-function unbumped(overlay, entry) {
+async function unbumped(overlay, entry) {
+  const changed =
+    sha256(await zipDist(overlay)) !== entry.sha256 ||
+    previewChanged(overlay, entry);
+  if (!changed) return null;
+  return `${overlay.id} changed since v${entry.release} but is still version ${entry.version}, so it won't ship. Bump its version in info.yaml and package.json.`;
+}
+
+/**
+ * Whether the overlay's preview changed since the release holding its zip. It's the one file
+ * that ships outside the zip.
+ *
+ * @param {Overlay} overlay
+ * @param {CatalogEntry} entry
+ * @returns {boolean}
+ */
+function previewChanged(overlay, entry) {
   try {
     execFileSync(
       "git",
-      ["diff", "--quiet", `v${entry.release}`, "--", `overlays/${overlay.id}`],
+      [
+        "diff",
+        "--quiet",
+        `v${entry.release}`,
+        "--",
+        `overlays/${overlay.id}/preview.png`,
+      ],
       { cwd: ROOT, stdio: "ignore" },
     );
-    return null;
+    return false;
   } catch (error) {
     // 1 means it changed. Anything else means the tag isn't here (a shallow clone).
-    const changed =
-      error instanceof Error && "status" in error && error.status === 1;
-    if (!changed) return null;
-    return `${overlay.id} changed since v${entry.release} but is still version ${entry.version}, so it won't ship. Bump its version in info.yaml and package.json.`;
+    return error instanceof Error && "status" in error && error.status === 1;
   }
 }
 
