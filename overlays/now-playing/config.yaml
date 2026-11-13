@@ -4,17 +4,22 @@
 sections:
   - name: Songs
     id: songs
+    translations: { es: Canciones }
   - name: Look
     id: look
+    translations: { es: Aspecto }
   - name: Animations
     id: animations
+    translations: { es: Animaciones }
   - name: Colors
     id: colors
+    translations: { es: Colores }
 fields:
   - name: Songs up next
     id: next_count
     type: slider
     section: songs
+    translations: { es: Siguientes canciones }
     attributes:
       min: 0
       max: 5
@@ -24,6 +29,8 @@ fields:
     id: next_style
     type: dropdown
     section: songs
+    when: { next_count: { not: 0 } }
+    translations: { es: Cómo se ven las siguientes canciones }
     attributes:
       multiple: false
       value: list
@@ -31,27 +38,36 @@ fields:
       options:
         - value: list
           label: List
+          translations: { es: Lista }
         - value: covers
           label: List with covers
+          translations: { es: Lista con portadas }
         - value: discs
           label: Covers only
+          translations: { es: Solo portadas }
         - value: ticker
           label: Ticker
+          translations: { es: Marquesina }
         - value: inside
           label: Inside the card
+          translations: { es: Dentro de la tarjeta }
   - name: Text before the next songs
     id: next_label
     type: input
     section: songs
+    when: { next_count: { not: 0 } }
+    translations: { es: Texto antes de las siguientes canciones }
     attributes:
       mode: text
       placeholder: Up next
+      translations: { es: A continuación }
       value: Up next
       default: Up next
   - name: Layout
     id: layout
     type: dropdown
     section: look
+    translations: { es: Diseño }
     attributes:
       multiple: false
       value: pill
@@ -59,18 +75,24 @@ fields:
       options:
         - value: pill
           label: Pill with a disc
+          translations: { es: Cápsula con disco }
         - value: sleeve
           label: Record sleeve
+          translations: { es: Funda de disco }
         - value: big
           label: Big cover
+          translations: { es: Portada grande }
         - value: bar
           label: Slim bar
+          translations: { es: Barra delgada }
         - value: text
           label: Text only
+          translations: { es: Solo texto }
   - name: Alignment
     id: align
     type: dropdown
     section: look
+    translations: { es: Alineación }
     attributes:
       multiple: false
       value: left
@@ -78,14 +100,18 @@ fields:
       options:
         - value: left
           label: Left
+          translations: { es: Izquierda }
         - value: center
           label: Center
+          translations: { es: Centro }
         - value: right
           label: Right
+          translations: { es: Derecha }
   - name: Font
     id: font
     type: font
     section: look
+    translations: { es: Fuente }
     attributes:
       value: ""
       default: ""
@@ -93,6 +119,7 @@ fields:
     id: size
     type: slider
     section: look
+    translations: { es: Tamaño (%) }
     attributes:
       min: 50
       max: 200
@@ -102,6 +129,7 @@ fields:
     id: entrance
     type: dropdown
     section: animations
+    translations: { es: Cómo entra la tarjeta }
     attributes:
       multiple: false
       value: slide
@@ -109,20 +137,28 @@ fields:
       options:
         - value: slide
           label: Slide
+          translations: { es: Deslizar }
         - value: fade
           label: Fade
+          translations: { es: Fundido }
         - value: pop
           label: Pop
+          translations: { es: Aparición }
         - value: drop
           label: Drop
+          translations: { es: Caída }
         - value: flip
           label: Flip
+          translations: { es: Volteo }
         - value: wipe
           label: Wipe
+          translations: { es: Barrido }
   - name: Turn the cover while a song plays
     id: spin
     type: toggle
     section: animations
+    when: { layout: [pill, sleeve, bar] }
+    translations: { es: Girar la portada mientras suena una canción }
     attributes:
       value: true
       default: true
@@ -130,6 +166,7 @@ fields:
     id: card_color
     type: color
     section: colors
+    translations: { es: Tarjeta }
     attributes:
       value: "18181b"
       default: "18181b"
@@ -137,6 +174,7 @@ fields:
     id: text_color
     type: color
     section: colors
+    translations: { es: Texto }
     attributes:
       value: f1f5f9
       default: f1f5f9
@@ -144,6 +182,7 @@ fields:
     id: accent_color
     type: color
     section: colors
+    translations: { es: Destacado }
     attributes:
       value: f43f5e
       default: f43f5e
