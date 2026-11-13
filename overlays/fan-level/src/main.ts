@@ -1,18 +1,11 @@
+import { entrance, leaving, play } from "@tokio-overlays/shared/entrances";
+import { SAMPLE_USERS } from "@tokio-overlays/shared/samples";
 import { tokio, TOKIO_EVENTS, type Fan } from "@tokioapp/overlay";
 import { DEFAULTS, readSettings } from "./config";
 import { HEART, SPARK } from "./icons";
 import "./style.css";
 
 type Timer = ReturnType<typeof setTimeout> | undefined;
-
-/** An animation of the banner. */
-interface Motion {
-  frames: Keyframe[];
-  duration: number;
-  easing: string;
-  // Where the banner grows or squashes from
-  origin: string;
-}
 
 // Where the Super Fan sparkles twinkle around the banner, in % of its width and height, and their
 // size in rem.
@@ -63,6 +56,8 @@ const GAP_MS = 300;
 // its own.
 const OWN_FONT = "system-ui, sans-serif";
 const HEAVY_FONT = '"Segoe UI Black", system-ui, sans-serif';
+// The wipe's corners: the banner's round ends.
+const ROUND = "999px";
 
 let settings = readSettings(window.__OVERLAY_CONFIG__, DEFAULTS);
 // Tokio's fans, the highest level first: up to 100, sent as the overlay connects and when they
@@ -134,7 +129,7 @@ function advance() {
   }
   // The fan leaves, and after the pause whoever is next by then comes in.
   switching = true;
-  const exit = play(leaving(), "forwards");
+  const exit = play(banner, leaving(settings, ROUND), "forwards");
   exit.addEventListener(
     "finish",
     () => {
@@ -163,8 +158,8 @@ function enter(fan: Fan) {
   lastId = fan.userId;
   paint(fan);
   banner.hidden = false;
-  const motion = entrance();
-  play(motion);
+  const motion = entrance(settings, ROUND);
+  play(banner, motion);
   if (fan.superfan) celebrate(motion.duration);
   timer = setTimeout(advance, settings.seconds * 1000);
 }
@@ -175,142 +170,6 @@ function put(fan: Fan) {
   showing = fan;
   paint(fan);
   if (turnedSuper) celebrate(0);
-}
-
-function play({ frames, duration, easing, origin }: Motion, fill?: FillMode) {
-  banner.style.transformOrigin = origin;
-  return banner.animate(frames, { duration, easing, fill });
-}
-
-/** How a fan comes in, from the side the banner is aligned to. Less motion leaves a fade. */
-function entrance(): Motion {
-  const { align } = settings;
-  const x = { left: "0%", center: "50%", right: "100%" }[align];
-  const origin = `${x} 50%`;
-  switch (reduceMotion.matches ? "fade" : settings.entrance) {
-    case "slide": {
-      const from =
-        align === "center"
-          ? "translateY(0.75rem)"
-          : `translateX(${align === "right" ? 1.5 : -1.5}rem)`;
-      return {
-        frames: [
-          { opacity: 0, transform: from },
-          { opacity: 1, transform: "none" },
-        ],
-        duration: 320,
-        easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
-        origin,
-      };
-    }
-    case "pop":
-      // It grows from its side, a little past its size, and settles.
-      return {
-        frames: [
-          { opacity: 0, transform: "scale(0.55)" },
-          { opacity: 1, transform: "scale(1.06)", offset: 0.55 },
-          { transform: "scale(0.98)", offset: 0.8 },
-          { transform: "none" },
-        ],
-        duration: 460,
-        easing: "ease-out",
-        origin,
-      };
-    case "drop":
-      // It falls, squashes as it lands, and bounces once.
-      return {
-        frames: [
-          {
-            opacity: 0,
-            transform: "translateY(-1.8rem)",
-            easing: "cubic-bezier(0.5, 0, 1, 0.5)",
-          },
-          { opacity: 1, offset: 0.25 },
-          {
-            transform: "translateY(0) scale(1.05, 0.9)",
-            offset: 0.55,
-            easing: "ease-out",
-          },
-          {
-            transform: "translateY(-0.3rem) scale(0.99, 1.02)",
-            offset: 0.78,
-            easing: "ease-in",
-          },
-          { transform: "none" },
-        ],
-        duration: 620,
-        easing: "linear",
-        origin: `${x} 100%`,
-      };
-    case "flip":
-      // It turns down into place like a flap on a departures board.
-      return {
-        frames: [
-          { opacity: 0, transform: "perspective(40rem) rotateX(-90deg)" },
-          {
-            opacity: 1,
-            transform: "perspective(40rem) rotateX(14deg)",
-            offset: 0.6,
-          },
-          { transform: "perspective(40rem) rotateX(-5deg)", offset: 0.82 },
-          { transform: "perspective(40rem) rotateX(0deg)" },
-        ],
-        duration: 560,
-        easing: "ease-out",
-        origin,
-      };
-    case "wipe": {
-      // It's uncovered from its side, or from the middle out when centered. It ends wider than the
-      // banner, so a Super Fan's glow is already there when the clip goes.
-      const hidden = {
-        left: "inset(0 100% 0 0 round 999px)",
-        center: "inset(0 50% 0 50% round 999px)",
-        right: "inset(0 0 0 100% round 999px)",
-      }[align];
-      return {
-        frames: [
-          { clipPath: hidden },
-          { clipPath: "inset(-1.5rem round 999px)" },
-        ],
-        duration: 420,
-        easing: "cubic-bezier(0.3, 0.7, 0.4, 1)",
-        origin,
-      };
-    }
-    default:
-      return {
-        frames: [{ opacity: 0 }, { opacity: 1 }],
-        duration: 400,
-        easing: "ease-out",
-        origin,
-      };
-  }
-}
-
-/** How a fan leaves: the way they came in, backwards and faster. A dropped fan falls out. */
-function leaving(): Motion {
-  const motion = entrance();
-  if (settings.entrance === "drop" && !reduceMotion.matches) {
-    return {
-      ...motion,
-      frames: [
-        { opacity: 1, transform: "none" },
-        { opacity: 0, transform: "translateY(1rem)" },
-      ],
-      duration: 260,
-      easing: "ease-in",
-    };
-  }
-  return {
-    ...motion,
-    frames: [...motion.frames]
-      .reverse()
-      .map((frame) =>
-        frame.offset == null ? frame : { ...frame, offset: 1 - frame.offset },
-      ),
-    duration: Math.round(motion.duration * 0.6),
-    easing: "ease-in",
-  };
 }
 
 /** A Super Fan's effect once they're in. The pulsing glow is in style.css. */
@@ -399,19 +258,11 @@ function withAlpha(hex: string, alpha: number) {
 // Eight fans from level 48 down to 2, in Tokio's order, the second, fifth and eighth Super Fans.
 function sampleFans(): Fan[] {
   const levels = [48, 41, 35, 27, 19, 12, 6, 2];
-  return [
-    "Sunny Fox",
-    "Pixel Panda",
-    "Lucky Tiger",
-    "Cosmic Owl",
-    "Happy Koala",
-    "Neon Wolf",
-    "Chill Otter",
-    "Brave Lynx",
-  ].map((name, i) => ({
+  return SAMPLE_USERS.map(({ username, handle }, i) => ({
     userId: `sample-${i}`,
-    username: name,
-    handle: name.toLowerCase().replace(" ", "_"),
+    username,
+    // Tokio sends a fan's handle without its @.
+    handle: handle.slice(1),
     fanLevel: levels[i],
     fanBadge: "",
     superfan: i % 3 === 1,

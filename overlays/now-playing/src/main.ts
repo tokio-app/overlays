@@ -1,18 +1,10 @@
+import { entrance, leaving, play } from "@tokio-overlays/shared/entrances";
 import { tokio, TOKIO_EVENTS, type MusicInfo } from "@tokioapp/overlay";
 import { DEFAULTS, readSettings } from "./config";
 import { RECORD } from "./icons";
 import { CHANGE_MS, EASE, Line, scrollAcross } from "./line";
 import { sampleQueue, splitTitle } from "./songs";
 import "./style.css";
-
-/** An animation of the card. */
-interface Motion {
-  frames: Keyframe[];
-  duration: number;
-  easing: string;
-  // Where the card grows or squashes from
-  origin: string;
-}
 
 const stage = document.getElementById("stage")!;
 const card = document.getElementById("card")!;
@@ -138,8 +130,8 @@ async function show(song: MusicInfo, key: string) {
     setSong(song, key, cover, false);
     state = "shown";
     card.hidden = false;
-    const motion = entrance();
-    play(motion);
+    const motion = entrance(settings, corners());
+    play(card, motion);
     // Up next comes in half way through the card's entrance.
     renderNext(false, motion.duration / 2);
   } else {
@@ -388,8 +380,8 @@ function leave() {
   version++;
   if (state !== "shown") return;
   state = "leaving";
-  const motion = leaving();
-  const out = play(motion, "forwards");
+  const motion = leaving(settings, corners());
+  const out = play(card, motion, "forwards");
   exit = out;
   nextExit = next.hidden
     ? undefined
@@ -418,142 +410,10 @@ function cancelLeave() {
   state = "shown";
 }
 
-function play({ frames, duration, easing, origin }: Motion, fill?: FillMode) {
-  card.style.transformOrigin = origin;
-  return card.animate(frames, { duration, easing, fill });
-}
-
-/** How the card comes in, from the side it's aligned to. Less motion leaves a fade. */
-function entrance(): Motion {
-  const { align } = settings;
-  const x = { left: "0%", center: "50%", right: "100%" }[align];
-  const origin = `${x} 50%`;
-  switch (reduceMotion.matches ? "fade" : settings.entrance) {
-    case "slide": {
-      const from =
-        align === "center"
-          ? "translateY(0.75rem)"
-          : `translateX(${align === "right" ? 1.5 : -1.5}rem)`;
-      return {
-        frames: [
-          { opacity: 0, transform: from },
-          { opacity: 1, transform: "none" },
-        ],
-        duration: 320,
-        easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
-        origin,
-      };
-    }
-    case "pop":
-      // It grows from its side, a little past its size, and settles.
-      return {
-        frames: [
-          { opacity: 0, transform: "scale(0.55)" },
-          { opacity: 1, transform: "scale(1.06)", offset: 0.55 },
-          { transform: "scale(0.98)", offset: 0.8 },
-          { transform: "none" },
-        ],
-        duration: 460,
-        easing: "ease-out",
-        origin,
-      };
-    case "drop":
-      // It falls, squashes as it lands, and bounces once.
-      return {
-        frames: [
-          {
-            opacity: 0,
-            transform: "translateY(-1.8rem)",
-            easing: "cubic-bezier(0.5, 0, 1, 0.5)",
-          },
-          { opacity: 1, offset: 0.25 },
-          {
-            transform: "translateY(0) scale(1.05, 0.9)",
-            offset: 0.55,
-            easing: "ease-out",
-          },
-          {
-            transform: "translateY(-0.3rem) scale(0.99, 1.02)",
-            offset: 0.78,
-            easing: "ease-in",
-          },
-          { transform: "none" },
-        ],
-        duration: 620,
-        easing: "linear",
-        origin: `${x} 100%`,
-      };
-    case "flip":
-      // It turns down into place like a flap on a departures board.
-      return {
-        frames: [
-          { opacity: 0, transform: "perspective(40rem) rotateX(-90deg)" },
-          {
-            opacity: 1,
-            transform: "perspective(40rem) rotateX(14deg)",
-            offset: 0.6,
-          },
-          { transform: "perspective(40rem) rotateX(-5deg)", offset: 0.82 },
-          { transform: "perspective(40rem) rotateX(0deg)" },
-        ],
-        duration: 560,
-        easing: "ease-out",
-        origin,
-      };
-    case "wipe": {
-      // It's uncovered from its side, or from the middle out when centered, with the corners of
-      // its layout: round ends for the pill and the bar.
-      const { layout } = settings;
-      const r = layout === "pill" || layout === "bar" ? "999px" : "1.1rem";
-      const hidden = {
-        left: `inset(0 100% 0 0 round ${r})`,
-        center: `inset(0 50% 0 50% round ${r})`,
-        right: `inset(0 0 0 100% round ${r})`,
-      }[align];
-      return {
-        frames: [
-          { clipPath: hidden },
-          { clipPath: `inset(-1.5rem round ${r})` },
-        ],
-        duration: 420,
-        easing: "cubic-bezier(0.3, 0.7, 0.4, 1)",
-        origin,
-      };
-    }
-    default:
-      return {
-        frames: [{ opacity: 0 }, { opacity: 1 }],
-        duration: 400,
-        easing: "ease-out",
-        origin,
-      };
-  }
-}
-
-/** How the card leaves: the way it came in, backwards and faster. A dropped card falls out. */
-function leaving(): Motion {
-  const motion = entrance();
-  if (settings.entrance === "drop" && !reduceMotion.matches) {
-    return {
-      ...motion,
-      frames: [
-        { opacity: 1, transform: "none" },
-        { opacity: 0, transform: "translateY(1rem)" },
-      ],
-      duration: 260,
-      easing: "ease-in",
-    };
-  }
-  return {
-    ...motion,
-    frames: [...motion.frames]
-      .reverse()
-      .map((frame) =>
-        frame.offset == null ? frame : { ...frame, offset: 1 - frame.offset },
-      ),
-    duration: Math.round(motion.duration * 0.6),
-    easing: "ease-in",
-  };
+// The wipe's corners, those of the layout: round ends for the pill and the bar.
+function corners() {
+  const { layout } = settings;
+  return layout === "pill" || layout === "bar" ? "999px" : "1.1rem";
 }
 
 function measure() {
