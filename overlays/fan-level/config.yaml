@@ -6,15 +6,19 @@ sections:
     id: fans
   - name: Look
     id: look
+    translations: { es: Aspecto }
   - name: Animations
     id: animations
+    translations: { es: Animaciones }
   - name: Colors
     id: colors
+    translations: { es: Colores }
 fields:
   - name: Lowest fan level that shows
     id: min_level
     type: slider
     section: fans
+    translations: { es: Nivel mínimo de fan }
     attributes:
       min: 1
       max: 50
@@ -24,6 +28,7 @@ fields:
     id: superfans_only
     type: toggle
     section: fans
+    translations: { es: Solo Super Fans }
     attributes:
       value: false
       default: false
@@ -31,6 +36,7 @@ fields:
     id: seconds
     type: slider
     section: fans
+    translations: { es: Segundos que se queda cada fan }
     attributes:
       min: 2
       max: 15
@@ -40,6 +46,7 @@ fields:
     id: shown_name
     type: dropdown
     section: look
+    translations: { es: Nombre en el banner }
     attributes:
       multiple: false
       value: name
@@ -47,21 +54,26 @@ fields:
       options:
         - value: name
           label: Name
+          translations: { es: Nombre }
         - value: handle
           label: "@handle"
+          translations: { es: "@usuario" }
   - name: Text before the level
     id: label
     type: input
     section: look
+    translations: { es: Texto antes del nivel }
     attributes:
       mode: text
       placeholder: Fan level
+      translations: { es: Nivel de fan }
       value: Fan level
       default: Fan level
   - name: Alignment
     id: align
     type: dropdown
     section: look
+    translations: { es: Alineación }
     attributes:
       multiple: false
       value: left
@@ -69,14 +81,18 @@ fields:
       options:
         - value: left
           label: Left
+          translations: { es: Izquierda }
         - value: center
           label: Center
+          translations: { es: Centro }
         - value: right
           label: Right
+          translations: { es: Derecha }
   - name: Font
     id: font
     type: font
     section: look
+    translations: { es: Fuente }
     attributes:
       value: ""
       default: ""
@@ -84,6 +100,7 @@ fields:
     id: size
     type: slider
     section: look
+    translations: { es: Tamaño (%) }
     attributes:
       min: 50
       max: 200
@@ -93,6 +110,7 @@ fields:
     id: entrance
     type: dropdown
     section: animations
+    translations: { es: Cómo entra un fan }
     attributes:
       multiple: false
       value: slide
@@ -100,20 +118,27 @@ fields:
       options:
         - value: slide
           label: Slide
+          translations: { es: Deslizar }
         - value: fade
           label: Fade
+          translations: { es: Fundido }
         - value: pop
           label: Pop
+          translations: { es: Aparición }
         - value: drop
           label: Drop
+          translations: { es: Caída }
         - value: flip
           label: Flip
+          translations: { es: Volteo }
         - value: wipe
           label: Wipe
+          translations: { es: Barrido }
   - name: Super Fan effect
     id: superfan_effect
     type: dropdown
     section: animations
+    translations: { es: Efecto de Super Fan }
     attributes:
       multiple: false
       value: sweep
@@ -121,12 +146,16 @@ fields:
       options:
         - value: sweep
           label: Light sweep
+          translations: { es: Barrido de luz }
         - value: pulse
           label: Pulsing glow
+          translations: { es: Resplandor pulsante }
         - value: sparkles
           label: Sparkles
+          translations: { es: Destellos }
         - value: none
           label: None
+          translations: { es: Ninguno }
   - name: Banner
     id: banner_color
     type: color
@@ -138,6 +167,7 @@ fields:
     id: name_color
     type: color
     section: colors
+    translations: { es: Texto }
     attributes:
       value: f1f5f9
       default: f1f5f9
@@ -145,6 +175,7 @@ fields:
     id: level_color
     type: color
     section: colors
+    translations: { es: Nivel }
     attributes:
       value: f43f5e
       default: f43f5e
