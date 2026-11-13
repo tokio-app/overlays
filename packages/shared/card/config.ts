@@ -1,10 +1,17 @@
-// Reads the overlay's settings. A missing or bad value keeps the previous one.
+// Reads the card's settings. A missing or bad value keeps the previous one.
 import type { ConfigData } from "@tokioapp/overlay";
+import {
+  ALIGNS,
+  boolean,
+  color,
+  FONT_MAX_LENGTH,
+  number,
+  oneOf,
+} from "../settings";
 import { LIGHTS, type Light } from "./light";
 
 const VISIBILITIES = ["always", "after_gift"] as const;
 const LAYOUTS = ["stacked", "row"] as const;
-const ALIGNS = ["left", "center", "right"] as const;
 const ENTRANCES = ["pop", "drop", "spin", "slide", "fade"] as const;
 
 export interface Settings {
@@ -31,53 +38,31 @@ export interface Settings {
   outlineColor: string;
 }
 
-// The same as config.yaml's defaults.
-export const DEFAULTS: Settings = {
-  visibility: "always",
-  seconds: 10,
-  clearHours: 6,
-  title: "Last gift",
-  showPhoto: true,
-  showCombo: true,
-  showCoins: true,
-  layout: "stacked",
-  align: "center",
-  font: "",
-  size: 100,
-  entrance: "pop",
-  light: "rays",
-  lightMoves: true,
-  float: true,
-  sparkles: true,
-  mainColor: "#f43f5e",
-  lightColor: "#f43f5e",
-  nameColor: "#f1f5f9",
-  coinColor: "#ffc93c",
-  outlineColor: "#18181b",
-};
-
-// The font setting's limit.
-const FONT_MAX_LENGTH = 60;
-const HEX = /^#[0-9a-f]{6}([0-9a-f]{2})?$/i;
-
-function oneOf<T extends string>(
-  value: unknown,
-  options: readonly T[],
-  fallback: T,
-): T {
-  return options.find((option) => option === value) ?? fallback;
-}
-
-function number(value: unknown, min: number, fallback: number) {
-  return typeof value === "number" && value >= min ? value : fallback;
-}
-
-function boolean(value: unknown, fallback: boolean) {
-  return typeof value === "boolean" ? value : fallback;
-}
-
-function color(value: unknown, fallback: string) {
-  return typeof value === "string" && HEX.test(value) ? value : fallback;
+/** The same as config.yaml's defaults. The title's is each overlay's own. */
+export function defaults(title: string): Settings {
+  return {
+    visibility: "always",
+    seconds: 10,
+    clearHours: 6,
+    title,
+    showPhoto: true,
+    showCombo: true,
+    showCoins: true,
+    layout: "stacked",
+    align: "center",
+    font: "",
+    size: 100,
+    entrance: "pop",
+    light: "rays",
+    lightMoves: true,
+    float: true,
+    sparkles: true,
+    mainColor: "#f43f5e",
+    lightColor: "#f43f5e",
+    nameColor: "#f1f5f9",
+    coinColor: "#ffc93c",
+    outlineColor: "#18181b",
+  };
 }
 
 /** The keys are the field ids in config.yaml. */

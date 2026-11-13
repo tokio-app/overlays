@@ -1,5 +1,5 @@
 // The sample gifters and gifts of the demo, which Tokio's preview plays until the first gift.
-import type { UserData } from "@tokioapp/overlay";
+import { SAMPLE_USERS as USERS } from "../samples";
 
 export interface SampleGift {
   id: string;
@@ -53,16 +53,5 @@ export const SAMPLE_GIFTS: SampleGift[] = [
   },
 ];
 
-export const SAMPLE_USERS: UserData[] = [
-  "Sunny Fox",
-  "Pixel Panda",
-  "Lucky Tiger",
-  "Cosmic Owl",
-  "Happy Koala",
-  "Neon Wolf",
-].map((name, i) => ({
-  username: name,
-  handle: `@${name.toLowerCase().replace(" ", "_")}`,
-  // The placeholder shows instead when offline.
-  profilePictures: [`https://picsum.photos/seed/tokio${i + 1}/200/200`],
-}));
+// The first six shared sample viewers.
+export const SAMPLE_USERS = USERS.slice(0, 6);
