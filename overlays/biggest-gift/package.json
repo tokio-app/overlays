@@ -1,6 +1,6 @@
 {
   "name": "@tokio-overlays/biggest-gift",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "The biggest gift sent on your LIVE, on spinning rays, with the gifter's name and photo, the combo count and the coins. A gift that costs more takes its place.",
   "private": true,
   "type": "module",

@@ -4,17 +4,22 @@
 sections:
   - name: Gift
     id: gift
+    translations: { es: Regalo }
   - name: Look
     id: look
+    translations: { es: Aspecto }
   - name: Animations
     id: animations
+    translations: { es: Animaciones }
   - name: Colors
     id: colors
+    translations: { es: Colores }
 fields:
   - name: When it shows
     id: visibility
     type: dropdown
     section: gift
+    translations: { es: Cuándo aparece }
     attributes:
       multiple: false
       value: always
@@ -22,12 +27,16 @@ fields:
       options:
         - value: always
           label: All the time
+          translations: { es: Todo el tiempo }
         - value: after_gift
           label: For a few seconds when it changes
+          translations: { es: Unos segundos cuando cambia }
   - name: Seconds it stays after it changes
     id: seconds
     type: slider
     section: gift
+    when: { visibility: after_gift }
+    translations: { es: Segundos que se queda después de cambiar }
     attributes:
       min: 3
       max: 60
@@ -37,6 +46,7 @@ fields:
     id: clear_hours
     type: slider
     section: gift
+    translations: { es: Horas sin regalos para quitar el regalo más grande }
     attributes:
       min: 1
       max: 24
@@ -46,15 +56,18 @@ fields:
     id: title
     type: input
     section: gift
+    translations: { es: Título (vacío lo oculta) }
     attributes:
       mode: text
       placeholder: Biggest gift
+      translations: { es: Regalo más grande }
       value: Biggest gift
       default: Biggest gift
   - name: Show the gifter's photo
     id: show_photo
     type: toggle
     section: gift
+    translations: { es: Mostrar la foto de quien regala }
     attributes:
       value: true
       default: true
@@ -62,6 +75,7 @@ fields:
     id: show_combo
     type: toggle
     section: gift
+    translations: { es: Mostrar el combo (×5) }
     attributes:
       value: true
       default: true
@@ -69,6 +83,7 @@ fields:
     id: show_coins
     type: toggle
     section: gift
+    translations: { es: Mostrar las monedas }
     attributes:
       value: true
       default: true
@@ -76,6 +91,7 @@ fields:
     id: layout
     type: dropdown
     section: look
+    translations: { es: Diseño }
     attributes:
       multiple: false
       value: stacked
@@ -83,12 +99,15 @@ fields:
       options:
         - value: stacked
           label: Stacked
+          translations: { es: Apilado }
         - value: row
           label: In a row
+          translations: { es: En fila }
   - name: Alignment
     id: align
     type: dropdown
     section: look
+    translations: { es: Alineación }
     attributes:
       multiple: false
       value: center
@@ -96,14 +115,18 @@ fields:
       options:
         - value: left
           label: Left
+          translations: { es: Izquierda }
         - value: center
           label: Center
+          translations: { es: Centro }
         - value: right
           label: Right
+          translations: { es: Derecha }
   - name: Font
     id: font
     type: font
     section: look
+    translations: { es: Fuente }
     attributes:
       value: ""
       default: ""
@@ -111,6 +134,7 @@ fields:
     id: size
     type: slider
     section: look
+    translations: { es: Tamaño (%) }
     attributes:
       min: 50
       max: 200
@@ -120,6 +144,7 @@ fields:
     id: entrance
     type: dropdown
     section: animations
+    translations: { es: Cómo entra un regalo nuevo }
     attributes:
       multiple: false
       value: pop
@@ -127,18 +152,24 @@ fields:
       options:
         - value: pop
           label: Pop
+          translations: { es: Aparición }
         - value: drop
           label: Drop
+          translations: { es: Caída }
         - value: spin
           label: Spin
+          translations: { es: Giro }
         - value: slide
           label: Slide
+          translations: { es: Deslizar }
         - value: fade
           label: Fade
+          translations: { es: Fundido }
   - name: Light behind the gift
     id: light
     type: dropdown
     section: animations
+    translations: { es: Luz detrás del regalo }
     attributes:
       multiple: false
       value: rays
@@ -146,28 +177,40 @@ fields:
       options:
         - value: rays
           label: Rays
+          translations: { es: Rayos }
         - value: sunburst
           label: Sunburst
+          translations: { es: Sol radiante }
         - value: spiral
           label: Spiral
+          translations: { es: Espiral }
         - value: spotlights
           label: Spotlights
+          translations: { es: Reflectores }
         - value: burst
           label: Comic burst
+          translations: { es: Estallido de cómic }
         - value: ripples
           label: Ripples
+          translations: { es: Ondas }
         - value: star
           label: Star
+          translations: { es: Estrella }
         - value: hearts
           label: Hearts
+          translations: { es: Corazones }
         - value: glow
           label: Glow
+          translations: { es: Resplandor }
         - value: none
           label: None
+          translations: { es: Ninguna }
   - name: Let the light move
     id: light_moves
     type: toggle
     section: animations
+    when: { light: { not: none } }
+    translations: { es: Mover la luz }
     attributes:
       value: true
       default: true
@@ -175,6 +218,7 @@ fields:
     id: float
     type: toggle
     section: animations
+    translations: { es: Hacer flotar el regalo }
     attributes:
       value: true
       default: true
@@ -182,6 +226,7 @@ fields:
     id: sparkles
     type: toggle
     section: animations
+    translations: { es: Mostrar destellos cuando entra un regalo }
     attributes:
       value: true
       default: true
@@ -189,6 +234,7 @@ fields:
     id: main_color
     type: color
     section: colors
+    translations: { es: Color principal }
     attributes:
       value: f43f5e
       default: f43f5e
@@ -196,6 +242,7 @@ fields:
     id: light_color
     type: color
     section: colors
+    translations: { es: Luz }
     attributes:
       value: f43f5e
       default: f43f5e
@@ -203,6 +250,7 @@ fields:
     id: name_color
     type: color
     section: colors
+    translations: { es: Nombre }
     attributes:
       value: f1f5f9
       default: f1f5f9
@@ -210,6 +258,7 @@ fields:
     id: coin_color
     type: color
     section: colors
+    translations: { es: Monedas }
     attributes:
       value: ffc93c
       default: ffc93c
@@ -217,6 +266,7 @@ fields:
     id: outline_color
     type: color
     section: colors
+    translations: { es: Contorno }
     attributes:
       value: "18181b"
       default: "18181b"
