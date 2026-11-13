@@ -53,6 +53,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 - Any framework works. Keep Vite's `base: "./"` (Tokio serves the overlay under `/<id>/`) and `build.license` (it writes `THIRD_PARTY_LICENSES.md` into the build). Keep the setup block in the HTML template.
 - The setup block must be written exactly `<script id="tokio-setup">`, with no other attributes. Tokio finds it with a regex and rewrites it with the overlay's ID and saved settings. Its `__OVERLAY_CONFIG__` defaults must match `config.yaml`.
 - `info.yaml` and `config.yaml` stay at the overlay's root, not in `public/`; the build copies them into `dist/`. Don't set `external` in `info.yaml`, Tokio sets it.
+- Every section, field and column name, option label and placeholder in `config.yaml` gets its Spanish next to it (`translations: { es: … }`), in Tokio's Spanish (its `.claude/rules/i18n.md` and `es-419.json`), with a text shared by several overlays translated the same in each. A setting that does nothing for some values of another gets a `when`, checked against the code. The template shows the translations.
 - `package.json` needs a `description` (shown in the catalog). Its `version` must equal `info.yaml`'s; Yarn 1 ignores workspaces without one.
 - Connect with `window.__OVERLAY_ID__ || new URLSearchParams(location.search).get("id")`, as the template does, so dev and imported builds work without edits.
 - Overlays use `@tokioapp/overlay` (`../tokio-event-loader`, MIT) from npm, bundled into the build. Don't load it from a CDN, so overlays work offline and pin the version they were tested with.
@@ -64,6 +65,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 
 - One `v<version>` tag (root `package.json`) publishes one release. It attaches only the overlays that are new or whose `info.yaml` version changed since the latest published release. Every release carries the full `overlays.json`, which points each overlay at the release holding its current zip.
 - **To ship a change to an overlay, bump its version** in `info.yaml` and `package.json`. `release:build` warns when an overlay changed since its release without a bump; the change won't ship.
+- **Bump the first number only for a breaking change**, one the PR template's box describes (streamers have to set the overlay up again). Tokio installs every other new version in the background and asks the streamer before this one (`catalogState` in Tokio's `src/common/util/catalog.ts`). Feat bumps the minor, fix the patch.
 - **Never delete or replace old releases or their assets.** The catalog links to them.
 - The base catalog is `https://github.com/tokio-app/overlays/releases/latest/download/overlays.json`. That URL needs no API call and has no rate limit. Prereleases (`-` in the version) are marked as such, so `latest` skips them.
 - An entry is reused when the base has the same version from another release. A rerun of a release whose catalog is already published rebuilds what that release holds. Zips use a fixed date and sorted entries, so the same files give the same sha256.
@@ -80,6 +82,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 - `validate.js` mirrors `processOverlay` and `hasSetupBlock` (same file as `SCRIPT_REGEX`). If Tokio's import accepts or rejects something new, follow it.
 - Tokio installs from the catalog (`tokio/src/main/services/overlay/common/catalog.ts`). It reads schema 1 and checks each zip's size and SHA-256 against the catalog. It only downloads zips and previews from this repo's release URLs (`https://github.com/tokio-app/overlays/releases/download/`), and drops entries whose id isn't kebab-case or is `alerts`, `timer`, `games` or `studio`. An update keeps the settings whose field id and type are unchanged, so keep field ids stable across versions. A table also keeps its cells by column id and type, so keep column ids stable too.
 - A new setting type works only from the Tokio release that adds it, since older versions refuse any `config.yaml` with it. Don't tag a release with an overlay that uses one before that Tokio release is out.
+- `when` (a field shown only while earlier fields have certain values) and `translations` (beside each name, option label and placeholder, by language code) don't wait for a release: older Tokio versions ignore them, showing every field in English, and a save there writes `config.yaml` without them until the next update. The website's `building-an-overlay` docs describe both.
 - The LIVE events in `.github/ISSUE_TEMPLATE/overlay_request.yml` mirror `TOKIO_EVENTS` (the `tokio:event:*` ones). Keep the server port (`37891`) and event names as Tokio has them.
 
 ## Licensing

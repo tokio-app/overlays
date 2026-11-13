@@ -3,20 +3,24 @@
 sections:
   - name: General
     id: general
+    translations: { es: General }
 fields:
   - name: Title
     id: title
     type: input
     section: general
+    translations: { es: Título }
     attributes:
       mode: text
       placeholder: Overlay title...
+      translations: { es: Título del overlay... }
       value: Likes
       default: Likes
   - name: Main color
     id: main_color
     type: color
     section: general
+    translations: { es: Color principal }
     attributes:
       value: ffffff
       default: ffffff

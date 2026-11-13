@@ -6,7 +6,7 @@ This repository holds the overlays' source, one folder each, and publishes their
 
 ## Using an overlay
 
-In Tokio, open the **Overlays** page, click **Official Overlays** and **Install** the overlay you want. When a new version is released, a dot appears on **Official Overlays** and the overlay's button changes to **Update**, which keeps your settings. The website's [Overlays page](https://tokio.ialfaro.com/overlays/) shows them all.
+In Tokio, open the **Overlays** page, click **Official Overlays** and **Install** the overlay you want. Tokio installs new versions on its own and keeps your settings. A version that changes how the overlay works, like 2.0 after 1.4, waits until you click **Update** on **Official Overlays** and confirm. The website's [Overlays page](https://tokio.ialfaro.com/overlays/) shows them all.
 
 To add one by hand instead:
 
@@ -73,6 +73,8 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/), sco
 ## Releases
 
 One release covers every overlay that is new or changed. Overlays have their own versions, in `info.yaml` and `package.json`, which must match. An overlay is only released when its version changes.
+
+Tokio installs a new version in the background, unless its first number went up: then it asks the streamer first. Bump the first number (2.0.0) only for a change that makes streamers set the overlay up again, like settings that reset or a layout that moves.
 
 To release:
 
