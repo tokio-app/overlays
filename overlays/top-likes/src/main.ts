@@ -1,10 +1,13 @@
+import { medal, PLACEHOLDER } from "@tokio-overlays/shared/icons";
+import { SAMPLE_USERS } from "@tokio-overlays/shared/samples";
+import { hours, randomInt } from "@tokio-overlays/shared/util";
 import {
   tokio,
   TOKIO_EVENTS,
   type ConfigData,
   type UserData,
 } from "@tokioapp/overlay";
-import { CROWN, HEART, medal, PLACEHOLDER } from "./icons";
+import { CROWN, HEART } from "./icons";
 import { Ranking, type Viewer } from "./ranking";
 import "./style.css";
 
@@ -36,22 +39,6 @@ const preview = window.name === `TOKIO_APP-${overlayId}`;
 const demo = preview || params.has("demo");
 const storageKey = `top-likes:${overlayId}`;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
-
-const SAMPLE_USERS: UserData[] = [
-  "Sunny Fox",
-  "Pixel Panda",
-  "Lucky Tiger",
-  "Cosmic Owl",
-  "Happy Koala",
-  "Neon Wolf",
-  "Chill Otter",
-  "Brave Lynx",
-].map((name, i) => ({
-  username: name,
-  handle: `@${name.toLowerCase().replace(" ", "_")}`,
-  // Placeholders show instead when offline.
-  profilePictures: [`https://picsum.photos/seed/tokio${i + 1}/200/200`],
-}));
 
 let maxUsers = 3;
 let resetMs = hours(6);
@@ -285,10 +272,6 @@ function load(): string | null {
   }
 }
 
-function hours(value: number) {
-  return value * 60 * 60 * 1000;
-}
-
 // The sample viewers start 9 likes apart, so they soon trade places.
 function sampleRanking() {
   const sample = new Ranking(resetMs);
@@ -333,8 +316,4 @@ function challenger() {
   const top = ranking.top(maxUsers + 1);
   const viewer = top[randomInt(1, top.length - 1)];
   return SAMPLE_USERS.find((user) => user.handle === viewer?.handle);
-}
-
-function randomInt(min: number, max: number) {
-  return min + Math.floor(Math.random() * (max - min + 1));
 }
