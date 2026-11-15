@@ -196,6 +196,8 @@ fields:
     translations: { es: Comando de chat (vacío lo desactiva) }
     attributes:
       mode: text
+      # Tokio's chat translation leaves messages that start with it as typed
+      command: true
       placeholder: "!socials"
       value: "!socials"
       default: "!socials"

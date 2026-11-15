@@ -14,6 +14,9 @@ export const OverlayMetaSchema = z.object({
   version: z.string(),
   external: z.boolean().optional(),
   config: z.boolean(),
+  // Chat commands the overlay answers that no setting holds, so Tokio's chat
+  // translation leaves them as typed
+  commands: z.array(z.string()).optional(),
 });
 
 // The text beside it in other languages, by language code
@@ -54,6 +57,9 @@ const InputSetting = z.object({
     mode: z.enum(["text", "number"]),
     placeholder: z.string().optional(),
     translations: Translations,
+    // Its value is a chat command the overlay answers, so Tokio's chat
+    // translation leaves messages that start with it as typed
+    command: z.boolean().optional(),
     value: InputValue,
     default: InputValue,
   }),
