@@ -36,6 +36,7 @@ body:
         - Cheer (tokio:event:cheer)
         - Raid (tokio:event:raid)
         - Channel Points Redeem (tokio:event:redeem)
+        - Super Chat (tokio:event:superchat)
         - Music Change (tokio:event:music:change)
         - Fans seen in earlier LIVEs (tokio:fans)
         - Top gifters (tokio:gifters)
