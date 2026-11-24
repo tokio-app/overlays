@@ -31,7 +31,7 @@ An overlay is a folder in `overlays/`. The folder's name is the overlay's id: ke
 
 ```
 overlays/gift-goal/
-├── package.json   # name @tokio-overlays/<id>, version, description, "build" script
+├── package.json   # name @tokio-overlays/<id>, version, description, platforms, "build" script
 ├── info.yaml      # name, version and config, read by Tokio
 ├── config.yaml    # the settings streamers see in Tokio's gallery (optional)
 ├── preview.png    # shown in Tokio and on the website, 16:9 (optional)
@@ -127,7 +127,8 @@ https://github.com/tokio-app/overlays/releases/latest/download/overlays.json
       "url": "https://github.com/tokio-app/overlays/releases/download/v0.2.0/gift-goal.zip",
       "size": 18342,
       "sha256": "…",
-      "preview": "https://github.com/tokio-app/overlays/releases/download/v0.2.0/gift-goal.png"
+      "preview": "https://github.com/tokio-app/overlays/releases/download/v0.2.0/gift-goal.png",
+      "platforms": ["tiktok", "youtube"]
     }
   ]
 }
@@ -147,6 +148,9 @@ https://github.com/tokio-app/overlays/releases/latest/download/overlays.json
 | `size`        | The zip's size in bytes.                                                |
 | `sha256`      | The zip's SHA-256, to check the download.                               |
 | `preview`     | The preview image's URL, or `null`.                                     |
+| `platforms`   | Where it works, from `package.json`. Missing means every platform.      |
+
+The platforms are `tiktok`, `twitch`, `youtube` and `kick`. Tokio's Official overlays lists an overlay only on profiles with one of its platforms, plus the ones already installed.
 
 Read the catalog and the zips from a server, a build script or a desktop app, not from a browser page: GitHub's download links send no CORS headers.
 

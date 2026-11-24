@@ -30,6 +30,8 @@ try {
   pkg.version = "1.0.0";
   // Left empty so the build asks for one.
   pkg.description = "";
+  // Emptied too, so the platforms are picked on purpose.
+  pkg.platforms = [];
   await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 
   const infoPath = join(dir, "info.yaml");
@@ -49,7 +51,8 @@ try {
 }
 
 console.log(`Created overlays/${id}. Next:
-  - describe it in overlays/${id}/package.json ("description", shown in the catalog)
+  - describe it in overlays/${id}/package.json ("description", shown in the catalog) and list
+    the platforms it works on ("platforms": tiktok, twitch, youtube, kick)
   - edit info.yaml, config.yaml and index.html's setup block
   - yarn dev ${id}`);
 

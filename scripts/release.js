@@ -57,6 +57,10 @@ const CatalogEntrySchema = z.object({
   sha256: z.string(),
   // Its preview image's URL.
   preview: z.string().nullable(),
+  // From the overlay's package.json: the platforms it works on (tiktok, twitch, youtube, kick).
+  // Optional, since catalogs published before it have none. Tokio reads a missing one as every
+  // platform.
+  platforms: z.array(z.string()).optional(),
 });
 
 const CatalogSchema = z.object({
@@ -146,7 +150,7 @@ try {
 
     if (old && old.version === info.version && old.release !== version) {
       // Same zip as before. Only fields that live in the catalog alone are refreshed.
-      entries.push({ ...old, description });
+      entries.push({ ...old, description, platforms: overlay.pkg.platforms });
       changes.unchanged.push(overlay.id);
       const warning = await unbumped(overlay, old);
       if (warning) changes.warnings.push(warning);
@@ -291,6 +295,7 @@ async function pack(overlay, info, description) {
     size: zip.length,
     sha256: sha256(zip),
     preview,
+    platforms: overlay.pkg.platforms,
   };
 }
 

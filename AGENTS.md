@@ -56,6 +56,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 - `info.yaml` and `config.yaml` stay at the overlay's root, not in `public/`; the build copies them into `dist/`. Don't set `external` in `info.yaml`, Tokio sets it.
 - Every section, field and column name, option label and placeholder in `config.yaml` gets its Spanish next to it (`translations: { es: … }`), in Tokio's Spanish (its `.claude/rules/i18n.md` and `es-419.json`), with a text shared by several overlays translated the same in each. A setting that does nothing for some values of another gets a `when`, checked against the code. The template shows the translations.
 - `package.json` needs a `description` (shown in the catalog). Its `version` must equal `info.yaml`'s; Yarn 1 ignores workspaces without one.
+- `package.json` also needs `platforms`, the platforms the overlay works on (`tiktok`, `twitch`, `youtube`, `kick`), which Tokio's Official overlays filters by. Check them against what each platform sends: only TikTok sends likes and `tokio:fans`, Twitch and Kick send no gifts (Bits and Kicks are their own events), and YouTube's gifts cost 0 coins, so an overlay that sizes or ranks gifts by coins is TikTok's. `yarn new` empties it so it's picked on purpose. Like `description`, it lives only in the catalog: changing it needs no version bump, and the next release publishes it.
 - Connect with `window.__OVERLAY_ID__ || new URLSearchParams(location.search).get("id")`, as the template does, so dev and imported builds work without edits.
 - Overlays use `@tokioapp/overlay` (`../tokio-event-loader`, MIT) from npm, bundled into the build. Don't load it from a CDN, so overlays work offline and pin the version they were tested with.
 - Read config values defensively (`typeof config.title === "string"`): `ConfigData` values can be strings, numbers, booleans, gifts or a table's rows (objects of cells keyed by column id).
@@ -87,7 +88,7 @@ Generated, don't edit: `overlays/*/dist/`, `release/`.
 - GitHub allows 1,000 assets per release (a zip and a preview per overlay). `release:build` fails above that; release fewer overlays per tag.
 - Asset names are fixed: `<id>.zip`, `<id>.png`, `overlays.json`. Tokio and the website depend on them and on the catalog's fields.
 - After publishing a release that isn't a prerelease, the workflow sends a `repository_dispatch` (`release`) to `tokio-app/website`, which rebuilds its Overlays page. That needs the `WEBSITE_DISPATCH_TOKEN` secret (Contents read and write on `tokio-app/website`); without it the step only warns.
-- Catalog format (`CatalogSchema` in `scripts/release.js`, documented in `README.md`): adding a field is fine. Renaming or removing one needs a new `CATALOG_SCHEMA`, and Tokio and the website must handle both.
+- Catalog format (`CatalogSchema` in `scripts/release.js`, documented in `README.md`): adding a field is fine. `platforms` is optional there, since catalogs published before it have none, and a missing one means every platform. Renaming or removing one needs a new `CATALOG_SCHEMA`, and Tokio and the website must handle both.
 - Release steps: bump the changed overlays' versions and the root version, commit (`chore(release): <version>`), push the tag `v<version>`.
 
 ## Keeping in sync with Tokio

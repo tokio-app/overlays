@@ -2,6 +2,12 @@
   "name": "@tokio-overlays/now-playing",
   "version": "1.0.0",
   "description": "The song playing from your music requests, its cover turning like a record, with the next songs in the queue.",
+  "platforms": [
+    "tiktok",
+    "twitch",
+    "youtube",
+    "kick"
+  ],
   "private": true,
   "type": "module",
   "scripts": {

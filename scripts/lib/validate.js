@@ -12,6 +12,9 @@ import {
 // resolve. Protocol-relative URLs (//cdn...) are fine.
 const ABSOLUTE_PATH_REGEX = /\s(?:src|href)=["']?(\/(?!\/)[^"'\s>]*)/i;
 
+// The platforms Tokio connects to (PLATFORMS in tokio's src/common/util/platforms.ts).
+const PLATFORMS = ["tiktok", "twitch", "youtube", "kick"];
+
 /**
  * @typedef {import("zod").infer<typeof OverlayMetaSchema>} OverlayInfo
  * @typedef {import("./overlays.js").Overlay} Overlay
@@ -33,6 +36,17 @@ export async function validate(overlay) {
 
   if (!overlay.pkg.description?.trim()) {
     errors.push("package.json needs a description, shown in the catalog.");
+  }
+  /** @type {unknown} */
+  const platforms = overlay.pkg.platforms;
+  if (
+    !Array.isArray(platforms) ||
+    platforms.length === 0 ||
+    !platforms.every((p) => PLATFORMS.includes(p))
+  ) {
+    errors.push(
+      `package.json needs "platforms", the platforms the overlay works on, from ${PLATFORMS.join(", ")}. Tokio lists it only on profiles with one of them.`,
+    );
   }
 
   const info = await readYAML(overlay.dist, "info.yaml", errors);

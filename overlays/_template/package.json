@@ -2,6 +2,9 @@
   "name": "@tokio-overlays/template",
   "version": "1.0.0",
   "description": "A title and the LIVE's total likes. The starting point for new overlays.",
+  "platforms": [
+    "tiktok"
+  ],
   "private": true,
   "type": "module",
   "scripts": {
