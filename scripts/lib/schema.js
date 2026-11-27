@@ -20,6 +20,8 @@ export const OverlayMetaSchema = z.object({
   // The first Tokio release that runs this version. Older builds keep the last
   // version without it.
   tokio: z.string().optional(),
+  // The platforms it works on, or "any". Tokio drops the ones it doesn't know.
+  platforms: z.union([z.literal("any"), z.array(z.string())]).optional(),
 });
 
 // The text beside it in other languages, by language code

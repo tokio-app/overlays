@@ -1,10 +1,7 @@
 {
   "name": "@tokio-overlays/fan-level",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Your fans take turns on a banner with their fan level and badge, and Super Fans get a glowing rim and a sparkle.",
-  "platforms": [
-    "tiktok"
-  ],
   "private": true,
   "type": "module",
   "scripts": {

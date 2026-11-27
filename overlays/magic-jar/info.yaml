@@ -3,3 +3,4 @@
 name: Magic Jar
 version: 1.2.0
 config: true
+platforms: [tiktok, youtube]

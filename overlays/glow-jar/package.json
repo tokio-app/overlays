@@ -2,9 +2,6 @@
   "name": "@tokio-overlays/glow-jar",
   "version": "1.2.0",
   "description": "Gifts drop into a glowing glass jar or crystal bowl and pile up, with a bubble for each gift and the top gifter's photo on a tag hanging from its bow.",
-  "platforms": [
-    "tiktok"
-  ],
   "private": true,
   "type": "module",
   "scripts": {

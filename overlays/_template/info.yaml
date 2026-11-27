@@ -3,3 +3,6 @@
 name: Overlay Template
 version: 1.0.0
 config: true
+# The platforms it works on: a list of tiktok, twitch, youtube and kick, or any. Tokio's
+# Official overlays lists it only on profiles with one of them.
+platforms: any

@@ -31,8 +31,8 @@ An overlay is a folder in `overlays/`. The folder's name is the overlay's id: ke
 
 ```
 overlays/gift-goal/
-├── package.json   # name @tokio-overlays/<id>, version, description, platforms, "build" script
-├── info.yaml      # name, version and config, read by Tokio
+├── package.json   # name @tokio-overlays/<id>, version, description, "build" script
+├── info.yaml      # name, version, config and platforms, read by Tokio
 ├── config.yaml    # the settings streamers see in Tokio's gallery (optional)
 ├── preview.png    # shown in Tokio and on the website, 16:9 (optional)
 ├── index.html     # with the <script id="tokio-setup"> block
@@ -42,6 +42,8 @@ overlays/gift-goal/
 Use any framework, or none. The only requirement is that `yarn build` writes a static site to `dist/` with relative asset paths. The template uses Vite with plain TypeScript. For React, Svelte or Vue, add the framework's Vite plugin to `vite.config.ts`, and keep `base: "./"` and the setup block in `index.html`.
 
 Code that several overlays use lives in `packages/shared`. To use it, add `"@tokio-overlays/shared": "*"` to the overlay's `dependencies` and import what you need, such as `import { Streaks } from "@tokio-overlays/shared/streaks"`. The overlay's build bundles it.
+
+`info.yaml` lists the platforms the overlay works on, `platforms: [tiktok, youtube]`, or `platforms: any` when it works on every platform Tokio connects to.
 
 The build copies `info.yaml` and `config.yaml` into `dist/`. It then runs the checks Tokio's import does: the YAML files against Tokio's schemas, the exact setup block, and relative asset paths. The `dist/` folder is ready to import into Tokio.
 
@@ -164,13 +166,13 @@ https://github.com/tokio-app/overlays/releases/latest/download/overlays.json
 | `size`        | The zip's size in bytes.                                                |
 | `sha256`      | The zip's SHA-256, to check the download.                               |
 | `preview`     | The preview image's URL, or `null`.                                     |
-| `platforms`   | Where it works, from `package.json`. Missing means every platform.      |
+| `platforms`   | Where it works, from `info.yaml`. Missing means every platform.         |
 | `versions`    | Newer versions that need a newer Tokio, newest first. Optional.         |
 | `tokio`       | In `versions`: the first Tokio release that runs that version.          |
 
 The top-level fields from `name` to `preview` describe the newest version that every Tokio build runs, which is all that Tokio builds from before `versions` read. Newer Tokio builds pick the newest of `versions` whose `tokio` they meet, and fall back to the top level.
 
-The platforms are `tiktok`, `twitch`, `youtube` and `kick`. Tokio's Official overlays lists an overlay only on profiles with one of its platforms, plus the ones already installed.
+The platforms are `tiktok`, `twitch`, `youtube` and `kick`. An overlay whose `info.yaml` says `platforms: any` has none in the catalog. Tokio's Official overlays lists an overlay only on profiles with one of its platforms, plus the ones already installed.
 
 Read the catalog and the zips from a server, a build script or a desktop app, not from a browser page: GitHub's download links send no CORS headers.
 

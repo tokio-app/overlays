@@ -65,9 +65,9 @@ const CatalogEntrySchema = z.object({
   ...VersionSchema.shape,
   // From the overlay's package.json.
   description: z.string(),
-  // From the overlay's package.json: the platforms it works on (tiktok, twitch, youtube, kick).
-  // Optional, since catalogs published before it have none. Tokio reads a missing one as every
-  // platform.
+  // From info.yaml: the platforms it works on (tiktok, twitch, youtube, kick), left out for any.
+  // Optional, since catalogs published before it have none. Tokio and the website read a missing
+  // one as every platform.
   platforms: z.array(z.string()).optional(),
   // Newer versions that need a newer Tokio, newest first, each with the first Tokio release that
   // runs it (info.yaml's tokio). Tokio picks the newest it can run, or the fields above.
@@ -160,7 +160,7 @@ try {
     if (!info) continue;
     const old = previous.get(overlay.id);
     const description = overlay.pkg.description?.trim() ?? "";
-    const platforms = overlay.pkg.platforms;
+    const platforms = info.platforms === "any" ? undefined : info.platforms;
     const same = old && versionsOf(old).find((v) => v.version === info.version);
 
     if (same && same.release !== version) {

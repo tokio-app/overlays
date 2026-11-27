@@ -40,17 +40,6 @@ export async function validate(overlay) {
   if (!overlay.pkg.description?.trim()) {
     errors.push("package.json needs a description, shown in the catalog.");
   }
-  /** @type {unknown} */
-  const platforms = overlay.pkg.platforms;
-  if (
-    !Array.isArray(platforms) ||
-    platforms.length === 0 ||
-    !platforms.every((p) => PLATFORMS.includes(p))
-  ) {
-    errors.push(
-      `package.json needs "platforms", the platforms the overlay works on, from ${PLATFORMS.join(", ")}. Tokio lists it only on profiles with one of them.`,
-    );
-  }
 
   const info = await readYAML(overlay.dist, "info.yaml", errors);
   let parsedInfo;
@@ -61,6 +50,17 @@ export async function validate(overlay) {
       if (res.data.version !== overlay.pkg.version) {
         errors.push(
           `info.yaml has version ${res.data.version} but package.json has ${overlay.pkg.version}. Keep them equal.`,
+        );
+      }
+      const { platforms } = res.data;
+      if (
+        platforms !== "any" &&
+        (!platforms ||
+          platforms.length === 0 ||
+          !platforms.every((p) => PLATFORMS.includes(p)))
+      ) {
+        errors.push(
+          `info.yaml needs platforms, the platforms the overlay works on: a list of ${PLATFORMS.join(", ")}, or any. Tokio lists it only on profiles with one of them.`,
         );
       }
       // Tokio's compareVersions splits it on its first "-".

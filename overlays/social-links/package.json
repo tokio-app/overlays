@@ -1,13 +1,7 @@
 {
   "name": "@tokio-overlays/social-links",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A card with your other social accounts, one at a time or all at once, each with a Follow button.",
-  "platforms": [
-    "tiktok",
-    "twitch",
-    "youtube",
-    "kick"
-  ],
   "private": true,
   "type": "module",
   "scripts": {

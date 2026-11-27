@@ -13,7 +13,6 @@ export const ID_REGEX = /^_?[a-z0-9]+(?:-[a-z0-9]+)*$/;
  * @property {string} name - The workspace name, `@tokio-overlays/<id>`.
  * @property {string} version - Must equal info.yaml's version.
  * @property {string} [description] - Shown in the catalog.
- * @property {string[]} [platforms] - The platforms it works on, in the catalog.
  * @property {Record<string, string>} [scripts]
  */
 
