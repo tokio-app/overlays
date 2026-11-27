@@ -1,5 +1,6 @@
 # Read by Tokio when the overlay is imported. Keep version equal to package.json's: a release
 # only ships the overlay when it changes.
 name: Social Links
-version: 1.2.0
+version: 1.2.1
 config: true
+platforms: any

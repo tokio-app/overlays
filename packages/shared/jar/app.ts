@@ -36,10 +36,12 @@ export interface JarApp<D extends DrawnJar> {
   readColors: (config: ConfigData) => void;
   /** Shows the colors read on the jar `design`: when the overlay starts and after each config. */
   showColors: (design: D, jar: Jar) => void;
+  /** How far the jar art's shadow reaches below the jar's box, in stage px. */
+  shadow: number;
 }
 
 // Every jar stands on the same line, in the middle of the stage, so the gifter and the total stay
-// put when the jar changes.
+// put when the jar changes. With both turned off, the jar stands on the stage's bottom instead.
 const BOTTOM = 560;
 
 /**
@@ -51,6 +53,7 @@ export function startJarApp<D extends DrawnJar>({
   jarById,
   readColors,
   showColors,
+  shadow,
 }: JarApp<D>) {
   const stage = document.getElementById("stage")!;
   const canvas = find("gifts", HTMLCanvasElement);
@@ -68,6 +71,7 @@ export function startJarApp<D extends DrawnJar>({
   const gifterCoins = document.getElementById("gifter-coins")!;
   const gifterBar = document.getElementById("gifter-bar")!;
   const gifterPill = gifter.querySelector(".pill")!;
+  const gifterAmount = gifter.querySelector<HTMLElement>(".amount")!;
   const total = document.getElementById("total")!;
   const totalCoins = document.getElementById("total-coins")!;
   const jarBack = document.getElementById("jar-back")!;
@@ -104,12 +108,14 @@ export function startJarApp<D extends DrawnJar>({
   let showGifter = true;
   let gifterMs = 8000;
   let overflow = false;
+  // The line the jar stands on.
+  let bottom = BOTTOM;
   applyConfig(window.__OVERLAY_CONFIG__);
 
   let design = jarById(jarId);
   // The stage's width in px, set by fit().
   let stageWidth = STAGE.minWidth;
-  const jar = new Jar(canvas, spill, design, { maxGifts, giftSize }, BOTTOM);
+  const jar = new Jar(canvas, spill, design, { maxGifts, giftSize }, bottom);
   jar.setOverflow(overflow);
   // Kept across reloads, since streaming apps reload overlays when scenes change.
   let tally = demo
@@ -145,16 +151,17 @@ export function startJarApp<D extends DrawnJar>({
 
   // Sent when the streamer saves the overlay's settings.
   tokio.on(TOKIO_EVENTS.CONFIG, (config) => {
+    const was = bottom;
     applyConfig(config);
     tally.resetMs = resetMs;
     Object.assign(jar.options, { maxGifts, giftSize });
     jar.setOverflow(overflow);
     tally.maxDrops = dropLimit();
-    // A new jar gets the same gifts, poured in again.
-    if (jarId !== design.id) {
+    // A new jar, or the jar on another line, gets the same gifts, poured in again.
+    if (jarId !== design.id || bottom !== was) {
       design = jarById(jarId);
       showDesign(design);
-      jar.setDesign(design, tally.drops);
+      jar.setDesign(design, tally.drops, bottom);
     } else {
       jar.trim();
     }
@@ -202,8 +209,11 @@ export function startJarApp<D extends DrawnJar>({
     if (typeof config.gifter_seconds === "number") {
       gifterMs = config.gifter_seconds * 1000;
     }
-    // Without the gifter pill, the total moves up into its place.
+    // Without the gifter pill, the total moves up into its place. Without either, the jar stands
+    // on the stage's bottom, its shadow whole. Only the settings move it: the total also hides
+    // while it's 0, but the jar mustn't jump at the first gift.
     stage.classList.toggle("no-gifter", !showGifter);
+    bottom = showGifter || showTotal ? BOTTOM : STAGE.height - shadow;
 
     const colors = {
       "--text-color": config.text_color,
@@ -228,7 +238,7 @@ export function startJarApp<D extends DrawnJar>({
   // Puts the jar in the middle of the stage, and the message's tail where it touches the jar on
   // either side.
   function placeDesign(next: D) {
-    const box = placement(next, stageWidth, BOTTOM);
+    const box = placement(next, stageWidth, bottom);
     const root = document.documentElement.style;
     root.setProperty("--stage-width", `${stageWidth}px`);
     root.setProperty("--jar-x", `${box.x}px`);
@@ -290,6 +300,8 @@ export function startJarApp<D extends DrawnJar>({
       messageGift.textContent = gifting.gift.name;
       messageCount.textContent = `x${gifting.count.toLocaleString()}`;
       messageCoins.textContent = `${gifting.coins.toLocaleString()} ${gifting.coins === 1 ? "Coin" : "Coins"}`;
+      // Gifts worth no coins, like YouTube's, show none.
+      messageCoins.parentElement!.hidden = gifting.coins === 0;
       const image = gifting.gift.image || GIFT_BOX;
       if (messageImage.getAttribute("src") !== image) messageImage.src = image;
       // The gift's name shortens too only when the gifter's can't make room on its own.
@@ -381,12 +393,14 @@ export function startJarApp<D extends DrawnJar>({
   function renderGifter() {
     const person = tally.gifter(gifterHandle);
     if (!person) return;
-    const rank = tally.rank(person.handle);
+    // A gifter of gifts worth no coins, like YouTube's, gets no medal and shows no coins.
+    const rank = person.coins > 0 ? tally.rank(person.handle) : undefined;
     const badge = rank ? medal(rank) : "";
     if (gifterMedal.innerHTML !== badge) gifterMedal.innerHTML = badge;
     gifterMedal.hidden = !rank;
     gifterName.textContent = person.name;
     gifterCoins.textContent = person.coins.toLocaleString();
+    gifterAmount.hidden = person.coins === 0;
     if (gifterPicture !== person.picture) {
       gifterPicture = person.picture;
       setPicture(gifterPhoto, person.picture);

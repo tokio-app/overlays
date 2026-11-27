@@ -17,6 +17,8 @@ startJarApp({
     if (typeof config.glass_color === "string") glassColor = config.glass_color;
   },
   showColors: (_design, jar) => showGlass(jar),
+  // The glass's cast shadow, under its foot.
+  shadow: 32,
 });
 
 // The glass's tones, from its color: lighter for haze, darker for its edges and thick parts,

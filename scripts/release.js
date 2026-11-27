@@ -39,14 +39,12 @@ const CATALOG_SCHEMA = 1;
 
 // overlays.json, read by Tokio and the website. Adding a field is fine; renaming or removing
 // one is a breaking change that needs a new CATALOG_SCHEMA. Keep pack's output in this order.
-const CatalogEntrySchema = z.object({
-  // The overlay's folder name.
-  id: z.string(),
+
+// One version of an overlay.
+const VersionSchema = z.object({
   // From info.yaml.
   name: z.string(),
   version: z.string(),
-  // From the overlay's package.json.
-  description: z.string(),
   // Whether it has settings.
   config: z.boolean(),
   // The release holding its zip, and the zip's name, URL, size in bytes and SHA-256 (hex).
@@ -57,10 +55,23 @@ const CatalogEntrySchema = z.object({
   sha256: z.string(),
   // Its preview image's URL.
   preview: z.string().nullable(),
-  // From the overlay's package.json: the platforms it works on (tiktok, twitch, youtube, kick).
-  // Optional, since catalogs published before it have none. Tokio reads a missing one as every
-  // platform.
+});
+
+const CatalogEntrySchema = z.object({
+  // The overlay's folder name.
+  id: z.string(),
+  // Its newest version that every Tokio build runs. Released Tokio builds read only these
+  // fields, and strip the ones they don't know.
+  ...VersionSchema.shape,
+  // From the overlay's package.json.
+  description: z.string(),
+  // From info.yaml: the platforms it works on (tiktok, twitch, youtube, kick), left out for any.
+  // Optional, since catalogs published before it have none. Tokio and the website read a missing
+  // one as every platform.
   platforms: z.array(z.string()).optional(),
+  // Newer versions that need a newer Tokio, newest first, each with the first Tokio release that
+  // runs it (info.yaml's tokio). Tokio picks the newest it can run, or the fields above.
+  versions: z.array(VersionSchema.extend({ tokio: z.string() })).optional(),
 });
 
 const CatalogSchema = z.object({
@@ -72,6 +83,8 @@ const CatalogSchema = z.object({
 });
 
 /**
+ * @typedef {z.infer<typeof VersionSchema>} Version
+ * @typedef {Version & { tokio: string }} GatedVersion
  * @typedef {z.infer<typeof CatalogEntrySchema>} CatalogEntry
  * @typedef {z.infer<typeof CatalogSchema>} Catalog
  * @typedef {import("./lib/overlays.js").Overlay} Overlay
@@ -147,22 +160,52 @@ try {
     if (!info) continue;
     const old = previous.get(overlay.id);
     const description = overlay.pkg.description?.trim() ?? "";
+    const platforms = info.platforms === "any" ? undefined : info.platforms;
+    const same = old && versionsOf(old).find((v) => v.version === info.version);
 
-    if (old && old.version === info.version && old.release !== version) {
+    if (same && same.release !== version) {
       // Same zip as before. Only fields that live in the catalog alone are refreshed.
-      entries.push({ ...old, description, platforms: overlay.pkg.platforms });
+      entries.push({ ...old, description, platforms });
       changes.unchanged.push(overlay.id);
-      const warning = await unbumped(overlay, old);
+      const warning = await unbumped(overlay, same);
       if (warning) changes.warnings.push(warning);
       continue;
     }
 
-    entries.push(await pack(overlay, info, description));
+    const packed = await pack(overlay, info);
+    if (info.tokio) {
+      // shortcut: an entry needs top-level fields for released Tokio builds; allow versions-only
+      // entries when a new overlay first needs a newer Tokio
+      if (!old) {
+        throw new Error(
+          `${overlay.id} is new and its info.yaml sets tokio, but released Tokio builds read only an entry's top level, which needs a version every build runs. Release a first version without tokio.`,
+        );
+      }
+      // Older builds keep the base's top level. A rerun replaces the version it built before.
+      const versions = prune([
+        { ...packed, tokio: info.tokio },
+        ...(old.versions ?? []).filter((v) => v.version !== info.version),
+      ]);
+      entries.push({
+        id: overlay.id,
+        ...VersionSchema.parse(old),
+        description,
+        platforms,
+        versions,
+      });
+    } else {
+      if (old?.versions?.length) {
+        changes.warnings.push(
+          `${overlay.id} ${info.version} sets no tokio in info.yaml, so every Tokio build gets it and the versions that need a newer Tokio (${old.versions.map((v) => `${v.version} for ${v.tokio}`).join(", ")}) leave the catalog. Keep tokio in the versions after one that needs it.`,
+        );
+      }
+      entries.push({ id: overlay.id, ...packed, description, platforms });
+    }
     if (old) {
       changes.updated.push({
         id: overlay.id,
         name: info.name,
-        from: old.version,
+        from: versionsOf(old)[0].version,
         to: info.version,
       });
     } else {
@@ -176,10 +219,11 @@ try {
 
   for (const old of previous.values()) {
     if (!entries.some((e) => e.id === old.id)) {
+      const [newest] = versionsOf(old);
       changes.removed.push({
         id: old.id,
-        name: old.name,
-        version: old.version,
+        name: newest.name,
+        version: newest.version,
       });
     }
   }
@@ -260,14 +304,14 @@ async function loadBase(source) {
 }
 
 /**
- * Zips a built overlay into release/assets, with its preview, and returns its catalog entry.
+ * Zips a built overlay into release/assets, with its preview, and returns its version's fields
+ * in the catalog.
  *
  * @param {Overlay} overlay
  * @param {OverlayInfo} info
- * @param {string} description
- * @returns {Promise<CatalogEntry>}
+ * @returns {Promise<Version>}
  */
-async function pack(overlay, info, description) {
+async function pack(overlay, info) {
   const zip = await zipDist(overlay);
   const file = `${overlay.id}.zip`;
   await writeFile(join(ASSETS_DIR, file), zip);
@@ -284,10 +328,8 @@ async function pack(overlay, info, description) {
   }
 
   return {
-    id: overlay.id,
     name: info.name,
     version: info.version,
-    description,
     config: info.config,
     release: version,
     file,
@@ -295,8 +337,59 @@ async function pack(overlay, info, description) {
     size: zip.length,
     sha256: sha256(zip),
     preview,
-    platforms: overlay.pkg.platforms,
   };
+}
+
+/**
+ * An entry's versions, newest first: those that need a newer Tokio, then the top level's.
+ *
+ * @param {CatalogEntry} entry
+ * @returns {Version[]}
+ */
+function versionsOf(entry) {
+  const top = VersionSchema.safeParse(entry);
+  return [...(entry.versions ?? []), ...(top.success ? [top.data] : [])];
+}
+
+/**
+ * Keeps the versions some Tokio would pick: Tokio runs the newest version it can, so one is left
+ * only while every newer one needs a higher Tokio.
+ *
+ * @param {GatedVersion[]} list - Newest first.
+ * @returns {GatedVersion[]}
+ */
+function prune(list) {
+  /** @type {string | undefined} */
+  let lowest;
+  return list.filter(({ tokio }) => {
+    const kept = lowest === undefined || compareVersions(tokio, lowest) < 0;
+    if (kept) lowest = tokio;
+    return kept;
+  });
+}
+
+/**
+ * Orders versions as semver does: 0.1.3-beta.2 < 0.1.3-beta.10 < 0.1.3 < 0.1.10. A copy of
+ * Tokio's compareVersions (src/common/util/index.ts), which picks the version: keep the two
+ * identical.
+ *
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+function compareVersions(a, b) {
+  const [coreA, preA] = a.split("-");
+  const [coreB, preB] = b.split("-");
+  /** @param {string} x @param {string} y */
+  const byNumbers = (x, y) => x.localeCompare(y, "en", { numeric: true });
+
+  const core = byNumbers(coreA, coreB);
+  if (core !== 0) return core;
+  // A release comes after its own prereleases
+  if (!preA && !preB) return 0;
+  if (!preA) return 1;
+  if (!preB) return -1;
+  return byNumbers(preA, preB);
 }
 
 /**
@@ -346,7 +439,7 @@ async function listFiles(dir) {
  * dependency.
  *
  * @param {Overlay} overlay
- * @param {CatalogEntry} entry
+ * @param {Version} entry - The catalog's version equal to the built one.
  * @returns {Promise<string | null>}
  */
 async function unbumped(overlay, entry) {
@@ -362,7 +455,7 @@ async function unbumped(overlay, entry) {
  * that ships outside the zip.
  *
  * @param {Overlay} overlay
- * @param {CatalogEntry} entry
+ * @param {Version} entry
  * @returns {boolean}
  */
 function previewChanged(overlay, entry) {

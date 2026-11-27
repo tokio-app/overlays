@@ -20,6 +20,8 @@ startJarApp({
   },
   // Each jar has its own colors, and the streamer may have picked theirs.
   showColors,
+  // The shadow on the ground under the jar.
+  shadow: 12,
 });
 
 // The jar's tones, from its own two colors or the streamer's: lighter where the light falls,

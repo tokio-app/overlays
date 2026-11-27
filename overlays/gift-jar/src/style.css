@@ -212,7 +212,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 10px 8px 18px;
+  padding: 8px 18px;
   border-radius: 999px;
   font-size: 20px;
   font-weight: 600;
@@ -264,7 +264,8 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: 6px;
+  /* Into the pill's padding, which is even for when the coins hide. */
+  margin: 0 -8px 0 6px;
   padding: 6px 16px 6px 8px;
   border-radius: 999px;
   background: rgb(0 0 0 / 0.3);
