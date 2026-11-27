@@ -41,6 +41,7 @@ interface Bubble {
   name: HTMLElement;
   gift: HTMLImageElement;
   coins: HTMLElement;
+  coin: HTMLElement;
   side: Side;
   anchor: Point;
   /** The gifter and gift's streak it shows. Empty while it's hidden. */
@@ -91,6 +92,8 @@ let showBubbles = true;
 let bubbleMs = 5000;
 let showTopGifter = true;
 let overflow = false;
+// The line the pictures stand on.
+let bottom = BOTTOM;
 applyConfig(window.__OVERLAY_CONFIG__);
 
 // The stage's width in px, set by fit().
@@ -100,7 +103,7 @@ let design = await loadDesign(JARS[jarId]);
 let [backLayer, frontLayer] = await loadLayers(design);
 // The jar on the stage, or the one loading to replace it.
 let shownJar = jarId;
-const jar = new Jar(canvas, spill, design, { maxGifts, giftSize }, BOTTOM);
+const jar = new Jar(canvas, spill, design, { maxGifts, giftSize }, bottom);
 jar.setOverflow(overflow);
 // Kept across reloads, since streaming apps reload overlays when scenes change.
 let tally = demo
@@ -137,13 +140,20 @@ let stopSample = demo ? playSample(handleGift) : undefined;
 
 // Sent when the streamer saves the overlay's settings.
 tokio.on(TOKIO_EVENTS.CONFIG, (config) => {
+  const was = bottom;
   applyConfig(config);
   tally.resetMs = resetMs;
   Object.assign(jar.options, { maxGifts, giftSize });
   jar.setOverflow(overflow);
   tally.maxDrops = dropLimit();
   jar.trim();
-  if (jarId !== shownJar) void showJar(jarId);
+  if (jarId !== shownJar) {
+    void showJar(jarId);
+  } else if (bottom !== was) {
+    // Moving the jar would push the gifts on the stage's bottom into it, so they pour in again.
+    jar.setDesign(design, tally.drops, bottom);
+    placeDesign();
+  }
   showColors();
   renderTotal();
   renderTag();
@@ -181,6 +191,9 @@ function applyConfig(config: ConfigData) {
     resetMs = hours(config.reset_hours);
   }
   showTotal = config.show_total !== false;
+  // Without the total, the jar stands on the stage's bottom. Only the setting moves it: the total
+  // also hides while it's 0, but the jar mustn't jump at the first gift.
+  bottom = showTotal ? BOTTOM : STAGE.height;
   showBubbles = config.show_bubbles !== false;
   if (typeof config.bubble_seconds === "number") {
     bubbleMs = config.bubble_seconds * 1000;
@@ -218,7 +231,7 @@ async function showJar(id: string) {
   [backLayer, frontLayer] = layers;
   hideBubbles();
   bubbles = makeBubbles();
-  jar.setDesign(design, tally.drops);
+  jar.setDesign(design, tally.drops, bottom);
   showDesign();
   showColors();
 }
@@ -269,7 +282,7 @@ function showEdges() {
 // Puts the jar in the middle of the stage, each bubble's tail on the jar, the tag's knot where its
 // bow is, and the total under where it stands.
 function placeDesign() {
-  const box = placement(design, stageWidth, BOTTOM);
+  const box = placement(design, stageWidth, bottom);
   const ground = Math.max(...design.outside.map((p) => p.y));
   const root = document.documentElement.style;
   root.setProperty("--stage-width", `${stageWidth}px`);
@@ -361,12 +374,15 @@ function makeBubble(side: Side, anchor: Point): Bubble {
   gift.addEventListener("error", () => {
     if (gift.src !== GIFT_BOX) gift.src = GIFT_BOX;
   });
+  const coin = within(el, ".coin", HTMLElement);
+  coin.innerHTML = COIN;
   return {
     el,
     photo: within(el, ".photo", HTMLElement),
     name: within(el, ".name", HTMLElement),
     gift,
     coins: within(el, ".coins", HTMLElement),
+    coin,
     side,
     anchor,
     key: "",
@@ -388,6 +404,9 @@ function showBubble(gifting: Gifting) {
   bubble.shownAt = performance.now();
   bubble.name.textContent = gifting.gifter.name;
   bubble.coins.textContent = gifting.coins.toLocaleString();
+  // Gifts worth no coins, like YouTube's, show none.
+  bubble.coins.hidden = gifting.coins === 0;
+  bubble.coin.hidden = gifting.coins === 0;
   const image = gifting.gift.image || GIFT_BOX;
   if (bubble.gift.getAttribute("src") !== image) bubble.gift.src = image;
   if (bubble.picture !== gifting.gifter.picture) {
@@ -437,10 +456,12 @@ function hideBubbles() {
   for (const bubble of bubbles) hideBubble(bubble);
 }
 
-// The tag shows the gifter with the most coins. When someone else takes the lead it swings once,
+// The tag shows the gifter with the most coins, once someone gave any. When someone else takes the lead it swings once,
 // around the knot it hangs from.
 function renderTag() {
-  const leader = showTopGifter ? tally.top(1)[0] : undefined;
+  const leader = showTopGifter
+    ? tally.top(1).find((gifter) => gifter.coins > 0)
+    : undefined;
   tag.hidden = !leader;
   if (!leader) {
     tagHandle = "";
