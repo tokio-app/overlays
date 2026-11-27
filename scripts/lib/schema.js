@@ -17,6 +17,9 @@ export const OverlayMetaSchema = z.object({
   // Chat commands the overlay answers that no setting holds, so Tokio's chat
   // translation leaves them as typed
   commands: z.array(z.string()).optional(),
+  // The first Tokio release that runs this version. Older builds keep the last
+  // version without it.
+  tokio: z.string().optional(),
 });
 
 // The text beside it in other languages, by language code

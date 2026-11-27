@@ -78,6 +78,8 @@ One release covers every overlay that is new or changed. Overlays have their own
 
 Tokio installs a new version in the background, unless its first number went up: then it asks the streamer first. Bump the first number (2.0.0) only for a change that makes streamers set the overlay up again, like settings that reset or a layout that moves.
 
+A version that needs a newer Tokio, like one using a setting type older Tokio builds refuse, sets `tokio` in its `info.yaml` to the first Tokio release that has what it needs, such as `tokio: 0.3.0-beta.1`. The catalog lists it under `versions`, and older Tokio builds keep the last version without `tokio`. Keep `tokio` in the versions after it: one without it replaces them all. A new overlay's first version can't set it.
+
 To release:
 
 1. Bump the version of each overlay you changed.
@@ -120,7 +122,6 @@ https://github.com/tokio-app/overlays/releases/latest/download/overlays.json
       "id": "gift-goal",
       "name": "Gift Goal",
       "version": "1.1.0",
-      "description": "A bar that fills up with gifts until it reaches a goal.",
       "config": true,
       "release": "0.2.0",
       "file": "gift-goal.zip",
@@ -128,7 +129,22 @@ https://github.com/tokio-app/overlays/releases/latest/download/overlays.json
       "size": 18342,
       "sha256": "…",
       "preview": "https://github.com/tokio-app/overlays/releases/download/v0.2.0/gift-goal.png",
-      "platforms": ["tiktok", "youtube"]
+      "description": "A bar that fills up with gifts until it reaches a goal.",
+      "platforms": ["tiktok", "youtube"],
+      "versions": [
+        {
+          "name": "Gift Goal",
+          "version": "1.2.0",
+          "config": true,
+          "release": "0.3.0",
+          "file": "gift-goal.zip",
+          "url": "https://github.com/tokio-app/overlays/releases/download/v0.3.0/gift-goal.zip",
+          "size": 18911,
+          "sha256": "…",
+          "preview": "https://github.com/tokio-app/overlays/releases/download/v0.3.0/gift-goal.png",
+          "tokio": "0.3.0-beta.1"
+        }
+      ]
     }
   ]
 }
@@ -149,6 +165,10 @@ https://github.com/tokio-app/overlays/releases/latest/download/overlays.json
 | `sha256`      | The zip's SHA-256, to check the download.                               |
 | `preview`     | The preview image's URL, or `null`.                                     |
 | `platforms`   | Where it works, from `package.json`. Missing means every platform.      |
+| `versions`    | Newer versions that need a newer Tokio, newest first. Optional.         |
+| `tokio`       | In `versions`: the first Tokio release that runs that version.          |
+
+The top-level fields from `name` to `preview` describe the newest version that every Tokio build runs, which is all that Tokio builds from before `versions` read. Newer Tokio builds pick the newest of `versions` whose `tokio` they meet, and fall back to the top level.
 
 The platforms are `tiktok`, `twitch`, `youtube` and `kick`. Tokio's Official overlays lists an overlay only on profiles with one of its platforms, plus the ones already installed.
 
